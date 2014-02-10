@@ -7,11 +7,15 @@ import os
 from . import create
 from .. import pyrfile
 
-def submit_file(filepath, writedirectory, numberofsimulations=100,
+def submit_file(filepath, writedirectory, email, numberofsimulations=100,
                             cores=12, nameofexperiment='auto', nodes='auto'):
     """2014-01-24 09:52 WEV
     :param filepath: path to the hyak submission file
     :type filepath: str
+    :param writedirectory: directory which the experiment files will be written
+    :type writedirectory: str
+    :param email: Email address which will recieve hyak updates on experiment
+    :type email: str
     """
     #Define all of the needed variables
     experimentname = os.path.basename(filepath).split('.')[0]
@@ -31,11 +35,12 @@ def submit_file(filepath, writedirectory, numberofsimulations=100,
     if nodes == 'auto':
         create.framework(experimentpath, devicetosequence,
             devicetokinefoldparms, devicetoexperimentalparms, cores,
-            numberofsimulations, nameofexperiment, devicetoforced)
+            numberofsimulations, nameofexperiment, devicetoforced, email)
     else:
         create.framework(experimentpath, devicetosequence,
             devicetokinefoldparms, devicetoexperimentalparms, cores,
-            numberofsimulations, nameofexperiment, devicetoforced, nodes=nodes)
+            numberofsimulations, nameofexperiment, devicetoforced, email,
+             nodes=nodes)
     #submit files for simulation
     submit_multiple_nodes(experimentpath)
 

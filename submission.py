@@ -10,10 +10,11 @@ from pyrfold.hyak import submission
 
 #Need to fill in the list of submission files
 LISTOFSUBMISSIONFILES = []
+EMAIL = ''
 NUMBEROFSIMULATIONS = 50
 NUMBEROFNODES = 5
 
 ROOT = os.getcwd()
 for submissionfile in LISTOFSUBMISSIONFILES:
-    submission.submit_file(os.path.join(ROOT, submissionfile), ROOT,
+    submission.submit_file(os.path.join(ROOT, submissionfile), ROOT, EMAIL,
          numberofsimulations=NUMBEROFSIMULATIONS, nodes=NUMBEROFNODES)

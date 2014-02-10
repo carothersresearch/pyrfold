@@ -58,7 +58,7 @@ def new_directory(directory):
 ############################ Core Functions   ##########################
 def framework(directorypath, devicetosequence, devicetokinefoldparms,
     devicetoexperimentalparms, cores, numberofsimulations,
-    nameofexperiment, forcedhelixes, nodes='auto'):
+    nameofexperiment, forcedhelixes, email, nodes='auto'):
     """(dict, dict, dict) -> .dat file containing all of the information
     edited 2013-10-02 WEV
     """
@@ -92,11 +92,13 @@ def framework(directorypath, devicetosequence, devicetokinefoldparms,
             new_directory('myscript-links')
             new_directory('completed-jobs')
             #wrtie MyBundle master submission script
-            mybundle_sub('wmvoje@uw.edu', int(cores), 1, '15:00:00', nameofexperiment + '-' + tempnodename)
+            mybundle_sub(email, int(cores), 1, '15:00:00',
+                            nameofexperiment + '-' + tempnodename)
             #write_MyScript.sh
             myscript_sub()
         #create $device.dat file for every device being tested
-        f = open(os.path.join(root, tempnodename,'dat',(device + '.dat')), 'wb')
+        f = open(os.path.join(root, tempnodename,'dat',(device + '.dat'))
+                                                                    , 'wb')
         f.write("<" + device + '\n')
         #truncating device from tuple (seq,winStart,winStop)
         seq = devicetosequence[device][0]

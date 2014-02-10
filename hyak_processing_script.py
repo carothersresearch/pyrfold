@@ -33,8 +33,10 @@ import os
 from pyrfold.hyak import create as hyakcreate
 from pyrfold.hyak import submission as sub
 
-#Define the experiment sub directories to be processed
-NAMEOFDIRECTORYLIST = ['pAF4z1_sTRSV1_submission', 'pAF4z1_sTRSV1_submission2']
+#Define the experiment sub directories to be processed 
+#MUST FULL IN
+NAMEOFDIRECTORYLIST = []
+EMAIL = ''
 
 #Do the work
 ROOT = os.getcwd()
@@ -92,7 +94,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
 
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)
 os.chdir(NAMEOFPROCESSINGFOLDER)
-hyakcreate.mybundle_sub('wmvoje@uw.edu', NUMBEROFCORES, 1,
+hyakcreate.mybundle_sub(EMAIL, NUMBEROFCORES, 1,
                                  '15:00:00', 'highthroughputproc')
 hyakcreate.general_myscript_sub(CALLCOMMAND)
 ROOT = os.getcwd()

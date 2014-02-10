@@ -1,10 +1,6 @@
 pyrfold
 =======
 
-pyrfold
-
-# pyrfold
-
 ## Requirments:
 ```
 None

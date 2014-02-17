@@ -3,7 +3,7 @@ This is a template script for processing a directory of hyak submissions
 It makes the following assumptions:
 - your directory should look something like this
 >Experiment Super Directory
->>high_throughput_processing.py
+>>hyak_processing_script.py
 >>Experiment_Sub_directory1
 >>>node-1
 >>>node-2

@@ -1,12 +1,9 @@
 """importing all of the sub modules
 """
-from . import convert
 from . import hyak
-from . import kineprocess
 from . import process
 from . import pyrfile
 from . import design
-from . import submit
 
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature."""

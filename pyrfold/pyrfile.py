@@ -43,7 +43,7 @@ def sub_file(inputfile):
     devicetoexperimentalparms = {}
     devicetoforced = {}
     #Exctracting data
-    with open(inputfile, 'rb') as csvfile:
+    with open(inputfile, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None) #Skips the header
         for row in reader:
@@ -94,7 +94,7 @@ def sub_summary(filename):
     """
     devicetoparts = {}
     #open the .csv file
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None) #Skips the header
         for row in reader:
@@ -117,7 +117,7 @@ def summary_file_to_dict(filename):
     """
     # Open the file
     outdictionary = {}
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             # Check to see if on name row or partlist row
@@ -138,7 +138,7 @@ def summary_refpart_to_sequence(filename):
     """
     # Open the file
     outdictionary = {}
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             # Check to see if on name row or partlist row
@@ -158,7 +158,7 @@ def summary_exppart_to_sequence(filename):
     outdictionary = {}
     tempdictionary = {}
     firstpass = 1
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             # Check to see if on name row or partlist row
@@ -214,7 +214,7 @@ def get_round_summaries_data(filename):
     filenames as well as frequences are stored in this file
     """
     outlist = []
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None) #skips the ehader
         for row in reader:

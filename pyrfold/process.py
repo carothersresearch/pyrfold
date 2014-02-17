@@ -16,12 +16,6 @@ Things TODO
 ########################################################################
 ############################ Modules ###################################
 ########################################################################
-import os
-import glob
-import csv
-import random
-import math
-import shutil
 
 def folding_frequency_one(refparttosequences,expparttosequences):
     """130829 WEV

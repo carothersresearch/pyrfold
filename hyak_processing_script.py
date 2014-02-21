@@ -33,7 +33,7 @@ import os
 from pyrfold.hyak import create as hyakcreate
 from pyrfold.hyak import submission as sub
 
-#Define the experiment sub directories to be processed 
+#Define the experiment sub directories to be processed
 #MUST FULL IN
 NAMEOFDIRECTORYLIST = []
 EMAIL = ''

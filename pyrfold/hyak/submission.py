@@ -32,15 +32,10 @@ def submit_file(filepath, writedirectory, email, numberofsimulations=100,
     pyrfile.submission(devicetosequence, devicetopart,
                     devicetokinefoldparms, devicetoexperimentalparms,
                     experimentpath)
-    if nodes == 'auto':
-        create.framework(experimentpath, devicetosequence,
-            devicetokinefoldparms, devicetoexperimentalparms, cores,
-            numberofsimulations, nameofexperiment, devicetoforced, email)
-    else:
-        create.framework(experimentpath, devicetosequence,
-            devicetokinefoldparms, devicetoexperimentalparms, cores,
-            numberofsimulations, nameofexperiment, devicetoforced, email,
-             nodes=nodes)
+    create.framework(experimentpath, devicetosequence,
+        devicetokinefoldparms, devicetoexperimentalparms, cores,
+        numberofsimulations, nameofexperiment, devicetoforced, email,
+         nodes=nodes)
     #submit files for simulation
     submit_multiple_nodes(experimentpath)
 

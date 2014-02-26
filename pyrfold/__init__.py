@@ -1,7 +1,7 @@
 """importing all of the sub modules
 """
 from . import hyak
-from . import process
+from . import compare
 from . import pyrfile
 from . import design
 

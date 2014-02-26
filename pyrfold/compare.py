@@ -16,6 +16,29 @@ Things TODO
 ########################################################################
 ############################ Modules ###################################
 ########################################################################
+def folding_frequency(referencepartdict, experimentpartdict):
+    """Compares experimentaldata to reference data to determine a realtive
+    level of folding
+    :param referencepartdict: A list of the referencsturcutres with freq for
+        all parts
+    :type referencepartdict: dict [part:[[freq, dotbracket], ...]
+    :param experimentpartdict: A collection of all of the structures that
+        appear for a given simulation run
+    :type experimentpartdict: dict [part:['dotrbacket']:[dotrbacket:freq]]
+    :return param: The collection of all the parts
+    :return type: dict [part:frequency]
+    """
+    returndict = {}
+    for part in experimentpartdict:
+        returndict[part] = 0.
+        if part not in referencepartdict:
+            print "ERROR - part {} not in reference".format(part)
+            break
+        #Make the comparision
+        for freqdotbracket in referencepartdict[part]:
+            if freqdotbracket[1] in experimentpartdict[part]['dotbracket']:
+                returndict[part] += experimentpartdict[part]['dotbracket'][freqdotbracket[1]]
+    return returndict
 
 def folding_frequency_one(refparttosequences,expparttosequences):
     """130829 WEV

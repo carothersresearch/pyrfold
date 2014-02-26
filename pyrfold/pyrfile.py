@@ -1,8 +1,6 @@
 """This module contains all of the scripts needed to create and read
 files which store processed information that has been converted from
 kinefold output
-
-
 TODO
 - consider removing sub files all together
 - rework sub_file function to have a single dictionary or something just
@@ -19,7 +17,7 @@ import csv
 ########################################################################
 ############################   Read  ###################################
 ########################################################################
-def sub_file(inputfile):
+def sub_file(inputfile, justexperimentalconditions=False):
     """(str) -> {str:tuple}, {str:list}, {str:tuple}
     This should read the contents of the csv and present all of the information
     contained in two dictionaries
@@ -35,6 +33,19 @@ def sub_file(inputfile):
         'TestName2': (113,3),
         'TestName3': (12,5)})
     """
+    if justexperimentalconditions:
+        # conditiondict = {}
+        with open(inputfile, 'rU') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader, None) #Skips the header
+            for row in reader:
+                if row[0]:
+                    # conditiondict['polrate'] = float(row[4])
+                    # conditiondict['dwelltime'] = float(row[5])
+                    # conditiondict['fiveprime'] = int(row[2])
+                    # conditiondict['threeprime'] = int(row[3])
+                    # return conditiondict
+                    return [row[4], row[5], row[2], row[3]]
     #initalizing variables:
     devicetosequence = {}
     devicetopart = {}
@@ -221,187 +232,6 @@ def get_round_summaries_data(filename):
             templist = [float(row[1]), row[0]]
             outlist.append(templist)
     return outlist
-
-########################################################################
-############################   Read/Write  #############################
-########################################################################
-def finalstructure(outputdirectory, foldername, devicedict, extrahelix):
-    """(filepath,filename,cict(device:[[partname],[partstart],partstop],[[]])
-        -> creates .csv containing file
-    reference information
-    This requires that build_timecourse_files has been run
-    """
-    # import local dependencies
-
-    root = os.getcwd()
-    # Jump into the directory containing all timecourse file containing
-    # Folders
-    """
-    >foldername
-    >>device 1
-    >>device
-    >>>files containing summary information
-    """
-    directorypath = os.path.join(outputdirectory, foldername)
-    #make list of all the files from this folder
-    files = os.walk(directorypath).next()[1]
-    #walk through all of the files in the list
-    for filename in files:
-        #files should have the same name as the dictionary
-        os.chdir(os.path.join(directorypath, filename))
-        filelist = glob.glob('*.csv')
-        partlist = [] #stores all of the part structures
-        for timefile in filelist:
-            #determine the number of entries in the spreadsheet
-            totalrows = len(list(csv.reader(open(timefile)))) - 1
-            if totalrows == 0:
-                continue
-            i = int(0)
-            with open(timefile) as csvfile:
-                reader = csv.reader(csvfile)
-                for row in reader:
-                    if i < totalrows: # Shifting for index
-                        i += 1
-                    else:
-                        sequence = row[6]
-                        dotbracket = row[7]
-            templist = [timefile[0:3]] #stores just the part structures
-            for partdata in devicedict[filename]: #will cycle through all parts
-                # sequence
-                templist.append(sequence[partdata[1] - 1: partdata[2]])
-                # Dotbracket
-                templist.append(dotbracket[partdata[1] -1: partdata[2]])
-
-            #[[runnumber, part1seq, part1helix part2seq],...]
-            partlist.append(templist)
-        #Write partlist into file
-        partfile = open(os.path.join(directorypath, filename + '.csv'), 'wb')
-        #Build header
-        header = ['Run Number']
-        for partdata in devicedict[filename]:
-            # header.append() #appends name of part
-            header.append(partdata[0])
-            #header.append('sequence')
-            header.append('dotbracket')
-        #Write header
-        for head in header:
-            partfile.write(head + ',')
-        partfile.write('\n')
-        for part in partlist:
-            for component in part:
-                partfile.write(component + ',')
-            partfile.write('\n')
-        partfile.close()
-    os.chdir(root)
-
-def experiment_summary(outputpath, filelocation):
-    """(path, path) -> create single .csv containg % summaries for all of the
-    parts that are contained in a single construct
-    2014-01-15 17:20 Modified by WEV
-    this file has been depreciated somewhat
-    """
-    pathtofinalstructures = os.path.join(outputpath, filelocation)
-    #Get the dictionary information
-    experimentsummarydict = experiment_dictionary(pathtofinalstructures)
-    # Create the output dictionary
-    with open(filelocation + '_summary' + '.csv', 'wb') as csvfile:
-        writer = csv.writer(csvfile)
-        for exp in experimentsummarydict:
-            writer.writerow([exp])
-            for part in experimentsummarydict[exp]:
-                linetowrite = [part]
-                for entry in experimentsummarydict[exp][part]['dist']:
-                    linetowrite.extend(entry)
-                writer.writerow(linetowrite)
-                writer.writerow(
-                            [experimentsummarydict[exp][part]['seq']])
-
-def experiment_dictionary(directorypath):
-    """2013-12-01 15:48 WEV This class will pull all of the unique part
-    structures along with a sequence and the name of the part
-    this is a recasting of experiment I think this will be much cleaner
-
-    The directorypath is a root folder which should contain a collection
-    of .csv files which have the final structure as taken out by
-    the final_structure function
-    """
-    #Directorypath outlines where all of the .csv files are contained
-    #This dictionary contains the breakdown of structures found
-    #In the file type
-    #Collect all of the files of interest
-    listoffiles = glob.glob(os.path.join(directorypath, '*.csv'))
-    #Three component dictionary {expname:{'partlist':},{'dotbracket':},{seq:}}
-    exptosummarydict = AutoVivification()
-    #fill in the lists that were aleady made
-    for sumfile in listoffiles:
-        expname = os.path.basename(os.path.splitext(sumfile)[0])
-        partnametodotbracket = {}
-        #This will contain all of the sequences
-        partnametosequence = {}
-        #This will be a list of all of the parts
-        partnames = []
-        with open(os.path.join(directorypath, sumfile)) as csvfile:
-            reader = csv.reader(csvfile)
-            #collect all of the part names
-            collectedsequence = False
-            for p, row in enumerate(reader):
-                if p > 0: #Everything but the header
-                    #adjusted to account for helix numbers
-                    for counter, number in enumerate(range(2, len(row), 2)):
-                        #print i
-                        if row[number]:
-                            #print i
-                            partnametodotbracket[partnames[counter]].append(row[number])
-                    if not collectedsequence:
-                        for count, number in enumerate(range(1, len(row), 2)):
-                            if row[number]:
-                                partnametosequence[partnames[count]] = row[number]
-                                collectedsequence = True
-                else: #this is the header
-                    #adjusted to account for helix numbers
-                    for i in range(1, len(row), 2):
-                        if row[i]:
-                            partnames.append(row[i])
-                            partnametodotbracket[row[i]] = []
-                            #print partnames
-        tempdotkinedict = sortandconsolidatedotbracket(partnametodotbracket)
-        for part in tempdotkinedict:
-            exptosummarydict[expname][part]['dist'] = tempdotkinedict[part]
-            exptosummarydict[expname][part]['seq'] = partnametosequence[part]
-        # exptosummarydict[expname]['partlist'] = partnames
-    return exptosummarydict
-
-def sortandconsolidatedotbracket(partnametodotbracket):
-    """This will sort all of the unique part structures
-    """
-    outputdict = {}
-    for part in partnametodotbracket:
-        firstentry = 0
-        counter = 0
-        for sequence in partnametodotbracket[part]:
-            counter += 1
-            if firstentry == 0:
-                sequencesorter = [[1, sequence]]
-                firstentry = 1
-            else:
-                for i in range(len(sequencesorter)):
-                    wasitunique = 1
-                    if sequence in sequencesorter[i]:
-                        sequencesorter[i][0] += 1
-                        wasitunique = 0
-                        break
-                #if it makes it here a new entry is needed
-                if wasitunique == 1:
-                    sequencesorter.append([1, sequence])
-        sequencesorter.sort()
-        sequencesorter.reverse()
-        for number, sequence in enumerate(sequencesorter):
-            sequencesorter[number] = \
-                            [sequence[0]/float(counter), sequence[1]]
-        outputdict[part] = sequencesorter
-    return outputdict
-
-
 
 ########################################################################
 ############################   Write  ##################################

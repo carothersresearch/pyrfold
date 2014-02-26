@@ -2,7 +2,7 @@
 into a form which is actually useful
 
 Things TODO
-- Add psudeonot conversion tools
+- ADD NO PARTLIST CONDITON TO FINALSTRUCTURES
 """
 
 ########################################################################
@@ -11,6 +11,7 @@ Things TODO
 import os
 import glob
 import cPickle as pickle
+from collections import Counter
 from . _convert import KineRmnOutput
 import errno
 
@@ -34,7 +35,7 @@ class AutoVivification(dict):
             return value
 
 def timecourse(rawoutputfolder, processeddirectory,
-                            singledirectory=False, csvoutput=False):
+                                        singledirectory=False):
     """2014-01-26 15:31 WEV
     :param rawoutputfolder: name of the folder which contians kinefold raw
         output
@@ -53,121 +54,129 @@ def timecourse(rawoutputfolder, processeddirectory,
     'energy' [kcal/mol] : list
     'type' : str (this is the type of experimnet renaturation)
     """
-    if csvoutput == False:
-        #Make the directory to write the files to
-        outputfilename = os.path.join(processeddirectory, 'timecourse')
-        if not os.path.exists(outputfilename):
-            make_sure_path_exists(outputfilename)
-        #collect all of the experiment files
+    #Make the directory to write the files to
+    outputfilename = os.path.join(processeddirectory, 'timecourse')
+    if not os.path.exists(outputfilename):
+        make_sure_path_exists(outputfilename)
+    #collect all of the experiment files
+    if not singledirectory:
+        experimentdirectorylist = os.walk(rawoutputfolder).next()[1]
+    else:
+        experimentdirectorylist = [rawoutputfolder]
+    for directoryname in experimentdirectorylist:
         if not singledirectory:
-            experimentdirectorylist = os.walk(rawoutputfolder).next()[1]
+            temprnmfilelist = glob.glob(os.path.join(rawoutputfolder,
+                                                directoryname, '*.rnm'))
         else:
-            experimentdirectorylist = [rawoutputfolder]
-        for directoryname in experimentdirectorylist:
-            if not singledirectory:
-                temprnmfilelist = glob.glob(os.path.join(rawoutputfolder,
-                                                    directoryname, '*.rnm'))
-            else:
-                temprnmfilelist = glob.glob(os.path.join(rawoutputfolder,
-                                                                '*.rnm'))
-                directoryname = os.path.basename(directoryname)
-            dicttopickle = {}
-            for rnmfile in temprnmfilelist:
-                rnmname = os.path.basename(rnmfile).split('.')[0]
-                rnmnumber = int(rnmname[0:3]) #should pull just the runnumber
-                #open the file for reading
-                tempdictionary = {}
-                tempdictionary['time'] = []
-                tempdictionary['dotbracket'] = []
-                tempdictionary['kine'] = []
-                tempdictionary['sequence'] = []
-                tempdictionary['base count'] = []
-                tempdictionary['kine helix'] = []
-                tempdictionary['energy'] = []
-                with open(rnmfile, 'r') as rnmopenfile:
-                    for i, line in enumerate(rnmopenfile):
-                        if i in [0, 1]:
-                            continue
-                        elif i % 2 == 0:
-                            kineobj = KineRmnOutput(line)
-                        elif (i+1) % 2 == 0: #should account for odds
-                            kineobj.addHelix(line)
-                            kineobj.generateDotBracket()
-                            tempdictionary['time'].append(kineobj.time)
-                            tempdictionary['dotbracket'].append(
-                                kineobj.dotbracket)
-                            tempdictionary['kine'].append(kineobj.structure)
-                            tempdictionary['base count'].append(
-                                kineobj.basenumber)
-                            tempdictionary['sequence'].append(kineobj.sequence)
-                            tempdictionary['kine helix'].append(kineobj.helix)
-                            tempdictionary['energy'].append(kineobj.freeenergy)
-                            tempdictionary['type'] = kineobj.type
-                            tempdictionary['total bases'] = kineobj.basetotal
-                dicttopickle[rnmnumber] = tempdictionary
-            #Now to write the output for a single experiment
-            temppickledest = os.path.join(outputfilename, directoryname + '.p')
-            pickle.dump(dicttopickle, open(temppickledest, 'wb'))
-    """
-    if csvoutput:
-        root = os.getcwd()
-        if not os.path.exists(os.path.join(
-                                    processeddirectory, rawoutputfolder)):
-            os.makedirs(os.path.join(processeddirectory, rawoutputfolder))
-        files = os.walk(root).next()[1]
-        #allows for rules used by the unix shell to find files
-        for f in files:
-            if not os.path.exists(os.path.join(processeddirectory,
-                                                        rawoutputfolder, f)):
-                # creates subdir
-                os.mkdir(os.path.join(processeddirectory, rawoutputfolder, f))
-            else:
-                continue
-            os.chdir(os.path.join(root, f)) #enters experiment specific folder
-            # rnmslist = glob.glob('*.rnms')
-            rnmlist = glob.glob('*.rnm')
-            for rnm in rnmlist: #goes through every file
-                rnmname = os.path.splitext(rnm)[0] #removes .extension
-
-                #open rnm file
-                rnmfile = open(rnm, 'r')
-                # These are all of the things
-                listofkineobjects = []
-                for i, line in enumerate(rnmfile):
+            temprnmfilelist = glob.glob(os.path.join(rawoutputfolder,
+                                                            '*.rnm'))
+            directoryname = os.path.basename(directoryname)
+        dicttopickle = {}
+        for rnmfile in temprnmfilelist:
+            rnmname = os.path.basename(rnmfile).split('.')[0]
+            rnmnumber = int(rnmname[0:3]) #should pull just the runnumber
+            #open the file for reading
+            tempdictionary = {}
+            tempdictionary['time'] = []
+            tempdictionary['dotbracket'] = []
+            tempdictionary['kine'] = []
+            tempdictionary['sequence'] = []
+            tempdictionary['base count'] = []
+            tempdictionary['kine helix'] = []
+            tempdictionary['energy'] = []
+            with open(rnmfile, 'r') as rnmopenfile:
+                for i, line in enumerate(rnmopenfile):
                     if i in [0, 1]:
                         continue
                     elif i % 2 == 0:
-                        tempobject = KineRmnOutput(line)
+                        kineobj = KineRmnOutput(line)
                     elif (i+1) % 2 == 0: #should account for odds
-                        tempobject.addHelix(line)
-                        tempobject.generateDotBracket()
-                        listofkineobjects.append(tempobject)
-                rnmfile.close()
+                        kineobj.addHelix(line)
+                        kineobj.generateDotBracket()
+                        tempdictionary['time'].append(kineobj.time)
+                        tempdictionary['dotbracket'].append(
+                            kineobj.dotbracket)
+                        tempdictionary['kine'].append(kineobj.structure)
+                        tempdictionary['base count'].append(
+                            kineobj.basenumber)
+                        tempdictionary['sequence'].append(kineobj.sequence)
+                        tempdictionary['kine helix'].append(kineobj.helix)
+                        tempdictionary['energy'].append(kineobj.freeenergy)
+                        tempdictionary['type'] = kineobj.type
+                        tempdictionary['total bases'] = kineobj.basetotal
+            dicttopickle[rnmnumber] = tempdictionary
+        #Now to write the output for a single experiment
+        temppickledest = os.path.join(outputfilename, directoryname + '.p')
+        pickle.dump(dicttopickle, open(temppickledest, 'wb'))
 
-                output = open(os.path.join(processeddirectory,
-                 rawoutputfolder, f, rnmname + '.csv'), 'wb')
-                #write header
-                headerlist = ['structure', 'helix numbering',
-                'free energy (kcal/mol)', 'time (ms)', 'base #', 'Base total',
-                 'sequence', 'dotbracket']
-                for head in headerlist:
-                    output.write(head)
-                    output.write(',')
-                output.write('\n')
+def finalstructure(processeddirectory, subsummarydict,
+                                        singledirectoryname=None):
+    """This will go through the previously picked timecoures data
+    and pull out part structures for all of the parts that are outlined
+    in the summart dictionary
+    :param processeddirectory: path to the processed output data
+    :type processeddirectory: str
+    :param summardict: dictionary with key being part name and value being
+        [referencepart name, part start, part stop] these are adjusted to the
+        submitted files
+    :param singledirectoryname: this is for highthroughput processing tells
+        the function to either dig through all of the completed pickles or to
+        process a single pickle if not none this will be the name of the
+    :return: builds a a system of pickle files
+    """
+    #Sort the paths
+    pathtotimecourse = os.path.join(processeddirectory, 'timecourse')
+    pathtofinalstructures = os.path.join(processeddirectory, 'finalstructure')
+    if not os.path.exists(pathtofinalstructures):
+        make_sure_path_exists(pathtofinalstructures)
+    #collect all of the experiment files
+    if not singledirectoryname:
+        pickletimelist = [ls for ls in os.listdir(pathtotimecourse)
+                    if os.path.isfile(os.path.join(pathtotimecourse, ls))]
+    else:
+        pickletimelist = [singledirectoryname]
+    #Now to go through all of these files
+    for pick in pickletimelist:
+        partlist = subsummarydict[pick.split('.')[0]]
+        pathtopickle = os.path.join(pathtotimecourse, pick)
+        with open(pathtopickle, 'r') as picktemp:
+            timecoursedict = pickle.load(picktemp)
+        outpickdict = create_finalpart_dict(timecoursedict, partlist)
+        pathtopickle = os.path.join(pathtofinalstructures, pick)
+        with open(pathtopickle, 'w') as topickle:
+            pickle.dump(outpickdict, topickle)
 
-                for kineob in listofkineobjects:
-                    output.write(kineob.structure + ',')
-                    output.write(kineob.helix + ',')
-                    output.write(kineob.freeenergy + ',')
-                    output.write(kineob.time + ',')
-                    output.write(kineob.basenumber + ',')
-                    output.write(kineob.basetotal + ',')
-                    output.write(kineob.sequence + ',')
-                    output.write(kineob.dotbracket + ',')
-                    output.write('\n')
-                output.close()
-        os.chdir(root)
-        """
+def create_finalpart_dict(timecoursedict, listsofparts=None):
+    """helper function to final structure
+    :param timecoursedict: complete timecoursedict for a experiment
+    :type timecoursedict: dict
+    :param listsofparts: listoflists of parts [[partname, start, stop],...]
+    :type listofparts: list
+    """
+    tempdict = {}
+    for partindex in listsofparts:
+        part = partindex[0]
+        tempdict[part] = {}
+        start = partindex[1] - 1 #shift to account for indexing
+        stop = partindex[2]
+        listofdotbracket = []
+        listofsequences = []
+        for runnumber in timecoursedict:
+            listofdotbracket.append(
+                timecoursedict[runnumber]['dotbracket'][-1][start:stop])
+            listofsequences.append(
+                timecoursedict[runnumber]['sequence'][-1][start:stop])
+        dotbracketcount = Counter(listofdotbracket)
+        sequencecount = Counter(listofsequences)
+        if len(sequencecount) > 1:
+            print "Sequences DONOT match up for {}".format(part)
+        #Convert count to average
+        totalcount = float(sum(dotbracketcount.viewvalues()))
+        for dotbrac in dotbracketcount:
+            dotbracketcount[dotbrac] /= totalcount
+        tempdict[part]['sequence'] = sequencecount.keys()[0]
+        tempdict[part]['dotbracket'] = dotbracketcount
+    return tempdict
 
 ########################################################################
 ################# Gen.  Destruction  ###################################
@@ -177,7 +186,7 @@ def clean_up_output_data(experimentfolder, singlefile=False):
     Removes all of the undesired files from the output of kinefold
     """
     otherfilestodelete = ['*/*.rnms', '*/*.rnm2','*/*.e'
-                                    ,'*/*.p', '*/*.i']
+                                    ,'*/*.p', '*/*.i', '*/*.rnm']
     if not singlefile:
         experimentfolder = os.path.join(experimentfolder, 'output')
         #change to this path

@@ -26,19 +26,25 @@ It acomplishes this by created two types of jobfiles:
 These job files contain a series of booleans and directories
 that tell a general processing script what to do
 """
-
 #Import Modules
 import shutil
 import os
-from pyrfold.hyak import create as hyakcreate
-from pyrfold.hyak import submission as sub
+import pyrfold.hyak.create as hyakcreate
+import pyrfold.hyak.submission as sub
 
 #Define the experiment sub directories to be processed
-#MUST FULL IN
+########################################################################
+########################################################################
+####################  FILL IN ##########################################
+
 NAMEOFDIRECTORYLIST = []
 EMAIL = ''
 
-#Do the work
+####################  FILL IN ##########################################
+########################################################################
+########################################################################
+
+#####Script does the Remainder of the work FOR YOU!!!!!!!!!!!!!!!!
 ROOT = os.getcwd()
 PROCESSINGSCRIPTNAME = 'delete_nodes_process_timecourse.py'
 NAMEOFPROCESSINGFOLDER = 'hyakprocessing' #all processing will be done this dir
@@ -76,20 +82,20 @@ for directoryname in NAMEOFDIRECTORYLIST:
                                                          , 'wb') as txtfile:
                     txtfile.write('timecourse')
                     txtfile.write('\n')
-                    #Reference structure comparisons
+                    #Final Structure
                     txtfile.write('0')
                     txtfile.write('\n')
                     #Single directory(as opposed to all output)
                     txtfile.write('1')
-                    txtfile.write('\n')
-                    #Additional round of processing
-                    txtfile.write('0')
                     txtfile.write('\n')
                     #Folder to process
                     txtfile.write(SIMDIR)
                     txtfile.write('\n')
                     #path to the output
                     txtfile.write(os.path.join(EXPPATH, 'proc_output'))
+                    txtfile.write('\n')
+                    #Get the reference files
+                    txtfile.write(os.path.join(EXPPATH, 'sub_summary.csv'))
                     txtfile.write('\n')
 
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)

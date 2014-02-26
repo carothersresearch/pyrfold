@@ -58,7 +58,8 @@ def new_directory(directory):
 ############################ Core Functions   ##########################
 def framework(directorypath, devicetosequence, devicetokinefoldparms,
     devicetoexperimentalparms, cores, numberofsimulations,
-    nameofexperiment, forcedhelixes, email, nodes='auto'):
+    nameofexperiment, forcedhelixes, email, nodes='auto',
+    finaljob=False):
     """(dict, dict, dict) -> .dat file containing all of the information
     edited 2013-10-02 WEV
     """
@@ -93,7 +94,7 @@ def framework(directorypath, devicetosequence, devicetokinefoldparms,
             new_directory('completed-jobs')
             #wrtie MyBundle master submission script
             mybundle_sub(email, int(cores), 1, '15:00:00',
-                            nameofexperiment + '-' + tempnodename)
+                    nameofexperiment + '-' + tempnodename, finaljob)
             #write_MyScript.sh
             myscript_sub()
         #create $device.dat file for every device being tested
@@ -151,7 +152,8 @@ def symlinks(exefile, filepath, linkdest, ext):
         os.symlink(('../' + exefile), os.path.join(linkdest, fi))
     os.chdir(root)
 
-def mybundle_sub(email, cores, nodes, walltime, nameofexperiment):
+def mybundle_sub(email, cores, nodes, walltime, nameofexperiment,
+                   finaljob=False):
     """(str,num,num,str) -> .sh script for submission
     nameofexperiment <- reference for emails
     This script is needed for hyak checkpointing
@@ -205,11 +207,13 @@ def mybundle_sub(email, cores, nodes, walltime, nameofexperiment):
     f.write("\nfor i in ../completed-jobs/*; do F=`echo $i | cut -d / -f 3`; rm $F; done")
     # run the rest of them
     f.write("\nfind . -name job\* | parallel -j $HYAK_SLOTS")
+    if finaljob:
+        f.write("\nfind . -name finaljob\* | parallel -j $HYAK_SLOTS")
     f.write("\nexit 0\n")
     f.close()
     os.chmod('MyBundle.sh', 0777)
 
-def framework_shell(pathtoframework):
+def framework_shell(pathtoframework, finaljob=False):
     """2013-12-16 16:02 WEV
     This will create all of the directories needed for the hyak
     framework

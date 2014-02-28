@@ -185,8 +185,8 @@ def clean_up_output_data(experimentfolder, singlefile=False):
     """2014-01-08 17:12 WEV
     Removes all of the undesired files from the output of kinefold
     """
-    otherfilestodelete = ['*/*.rnms', '*/*.rnm2','*/*.e'
-                                    ,'*/*.p', '*/*.i', '*/*.rnm']
+    otherfilestodelete = ['*.rnms', '*.rnm2','*.e'
+                                    ,'*.p', '*.i', '*.rnm']
     if not singlefile:
         experimentfolder = os.path.join(experimentfolder, 'output')
         #change to this path
@@ -196,6 +196,7 @@ def clean_up_output_data(experimentfolder, singlefile=False):
         for filename in deletefileiterator:
             os.remove(filename)
         for filetype in otherfilestodelete:
+            filetype = '*/' + filetype
             deletefileiterator = glob.iglob(os.path.join(experimentfolder,
                                                 filetype))
             for filename in deletefileiterator:

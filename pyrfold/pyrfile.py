@@ -73,18 +73,20 @@ def sub_file(inputfile, justexperimentalconditions=False):
                                                 float(row[7]), float(row[8]))
                 #Collect forced Helix data
                 forcedhelixes = []
-                for index in range(9, 18, 3):
-                    if row[index]:
-                        forcedhelixes.append([int(row[index]),
-                                              int(row[index + 1]),
-                                              int(row[index + 2])])
+                if len(row) > 10:
+                    for index in range(9, 18, 3):
+                        if row[index]:
+                            forcedhelixes.append([int(row[index]),
+                                                  int(row[index + 1]),
+                                                  int(row[index + 2])])
                 templist = []
-                for i in range(18, len(row) - 1, 3):
-                    if row[i]:
-                        templist.append([row[i],
-                                        int(row[i+1]),
-                                        int(row[i+2]),
-                devicetosequence[row[1]][0][int(row[i+1]) - 1: int(row[i+2])]])
+                if len(row) > 18:
+                    for i in range(18, len(row) - 1, 3):
+                        if row[i]:
+                            templist.append([row[i],
+                                            int(row[i+1]),
+                                            int(row[i+2]),
+                    devicetosequence[row[1]][0][int(row[i+1]) - 1: int(row[i+2])]])
                         #Last step adds the sequence of the part to the list
                         #1 is subtracked to account from the 1 to 0 index
                         #it is only subtracked from the low bound because of how
@@ -290,6 +292,9 @@ def filled_in_form(filename, dicty):
     """()-> csv file to fill in
     This should simply create an empty submission file for submission
     dicty = {name: KineSubData class}
+
+    TODO URGENT this is not working for the current submission system
+    But it will work without forced data and parts
     """
     with open(filename + '.csv', 'wb') as f:
         headers = ['sequence', 'name', 'window start',
@@ -300,11 +305,14 @@ def filled_in_form(filename, dicty):
                    'entanglements 0 no 1 yes']
                    #'sequence from experiment', 'size of sequence']
                    #will try to incldue this information in a summary file
+        forcedlist = ['forced start', 'forced stop', 'forced size']
+        for i in range(3):
+            headers.extend(forcedlist)
         for i in range(5):
             headers.append('part' + str(i+1))
             headers.append('part start')
             headers.append('part stop')
-       #writing headers
+           #writing headers
         for head in headers:
             f.write(head + ',')
         f.write('\n')

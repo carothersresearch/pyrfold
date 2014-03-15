@@ -62,6 +62,8 @@ if PROCESSINGTYPE == 'timecourse':
 if PROCESSINGTYPE == 'additionalround':
     #This will be linked to a job file that is submitted after
     #all other files have been submitted
+    #Are we just doing a summary step
+    JUSTSUMMARY = int(INPUTFILE.next().strip())
     #Path to timecourse and final data:
     PROCESSEDDIRECTORY = INPUTFILE.next().strip()
     #Path to summary files directory
@@ -145,9 +147,10 @@ if PROCESSINGTYPE == 'additionalround':
             writer.writerow(linetowrite)
     #Write hyakp.get_exp_conditions
     #BUILD OTHER SUBMISSION
-    hyaks.additional_round_submission(STATDICT, CURRENTSUBMISSIONPATH,
-         FOLDINGCUTOFF, NEXTROUNDPATH, [POLRATE, DWELLTIME, FIVEPOS, THREEPOS],
-         [EMAIL, NUMBEROFSIMULATIONS])
+    if not JUSTSUMMARY:
+        hyaks.additional_round_submission(STATDICT, CURRENTSUBMISSIONPATH,
+             NEXTROUNDPATH, [[POLRATE, DWELLTIME, FIVEPOS, THREEPOS]],
+             [EMAIL, NUMBEROFSIMULATIONS], foldcutoff=FOLDINGCUTOFF)
 
 
 

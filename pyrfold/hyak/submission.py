@@ -69,20 +69,20 @@ def submit_basic_hyak_framework(myscriptlinksdirectory):
     call(callcommand, shell=True)
 
 ############## RESUBMISSION STUFF ######################################
-def additional_round_submission(performdict, cursubpath, foldcutoff,
-            nextroundpath, listofconditions, submissiondata):
+def additional_round_submission(performdict, cursubpath, nextroundpath,
+        listsofconditions, submissiondata, foldcutoff=None):
     """ This is used to submit an additional round of simulations based on
     a greedy selection
-    :param performdict:
-    :type performdict:
-    :param cursubname:
-    :type cursubname:
-    :param foldcutoff:
-    :type foldcutoff:
-    :param nextroundpath:
-    :type nextroundpath:
-    :param listofconditions:
-    :type listofconditions:
+    :param performdict: A dictionary that contains the device names:foldingfreq
+    :type performdict: dict
+    :param cursubpath: Path to the submission.csv of the previous round
+    :type cursubpath: str
+    :param foldcutoff: the minimum folding frequency allowed
+    :type foldcutoff: float
+    :param nextroundpath: directory path to the next round
+    :type nextroundpath: str
+    :param listsofconditions: list of lists of all of the exp conditions
+    :type listsofconditions: list [[polrate, dwelltime, fivepos, threepos],...]
     :param submissiondata: [email, numberofsimulations]
     :type submissiondata: list
 
@@ -90,13 +90,17 @@ def additional_round_submission(performdict, cursubpath, foldcutoff,
     """
     #Select the winners
     listofdevices = []
-    for device in performdict:
-        fail = False
-        #Everypart has to fold better than the cutoff
-        for part in performdict[device]:
-            if performdict[device][part] < foldcutoff:
-                fail = True
-        if not fail:
+    if foldcutoff:
+        for device in performdict:
+            fail = False
+            #Everypart has to fold better than the cutoff
+            for part in performdict[device]:
+                if performdict[device][part] < foldcutoff:
+                    fail = True
+            if not fail:
+                listofdevices.append(device)
+    else:
+        for device in performdict:
             listofdevices.append(device)
     #Pass the devices with the former spreadsheet to make a new spreadsheet
     nextsubfilelist = []
@@ -105,16 +109,22 @@ def additional_round_submission(performdict, cursubpath, foldcutoff,
         nextsubfilelist.append(next(reader))
         for row in reader:
             if row[1] in listofdevices:
-                #Now have to change the values 18, 19, 20
-                #windowstart = partstart - shift
-                row[2] = int(row[19]) - listofconditions[2]
-                #Right window
-                row[3] = listofconditions[3] + int(row[20])
-                #Pol Rate
-                row[4] = listofconditions[0]
-                #dwell time
-                row[5] = listofconditions[1]
-                nextsubfilelist.append(row)
+                for count, listofconditions in enumerate(listsofconditions):
+                    temprow = row[:]
+                    #Now have to change the values 18, 19, 20
+                    if count == 0:
+                        pass
+                    else:
+                        temprow[1] += '--' + str(count)
+                    #windowstart = partstart - shift
+                    temprow[2] = int(temprow[19]) - listofconditions[2]
+                    #Right window
+                    temprow[3] = listofconditions[3] + int(temprow[20])
+                    #Pol Rate
+                    temprow[4] = listofconditions[0]
+                    #dwell time
+                    temprow[5] = listofconditions[1]
+                    nextsubfilelist.append(temprow)
     #Get the name of the next round
     nextroundname = os.path.basename(nextroundpath)
     subfiledirectory = os.path.dirname(cursubpath)

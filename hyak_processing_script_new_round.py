@@ -40,6 +40,7 @@ EMAIL = 'wmvoje@uw.edu'
 NAMEOFNEXTROUND = 'round-2'
 REFERENCEFILE = 'processed_reference_summary.csv'
 ADDITIONALROUNDOFPROCESS = True
+JUSTSUMMARY = True
 CUTOFFFREQ = 0.1
 POLRATE = 20
 DWELLTIME = 5
@@ -112,6 +113,12 @@ for directoryname in NAMEOFDIRECTORYLIST:
             with open(os.path.join(PATHTOPARMS, 'finaljob-' + directoryname
                                             + '.txt'), 'wb') as txtfile:
                 txtfile.write('additionalround')
+                txtfile.write('\n')
+                #Just processe or not
+                if JUSTSUMMARY:
+                    txtfile.write('1')
+                else:
+                    txtfile.write('0')
                 txtfile.write('\n')
                 #Processed Directory
                 txtfile.write(os.path.join(EXPPATH, 'proc_output'))

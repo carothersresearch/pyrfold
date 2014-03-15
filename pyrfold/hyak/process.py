@@ -107,10 +107,10 @@ def timecourse(rawoutputfolder, processeddirectory,
             dicttopickle[rnmnumber] = tempdictionary
         #Now to write the output for a single experiment
         temppickledest = os.path.join(outputfilename, directoryname + '.p')
-        pickle.dump(dicttopickle, open(temppickledest, 'wb'))
+        pickle.dump(dicttopickle, open(temppickledest, 'wb'), protocol=2)
 
-def finalstructure(processeddirectory, subsummarydict,
-                                        singledirectoryname=None):
+def finalstructure(processeddirectory, subsummarydict=None,
+                 singledirectoryname=None):
     """This will go through the previously picked timecoures data
     and pull out part structures for all of the parts that are outlined
     in the summart dictionary
@@ -137,14 +137,17 @@ def finalstructure(processeddirectory, subsummarydict,
         pickletimelist = [singledirectoryname]
     #Now to go through all of these files
     for pick in pickletimelist:
-        partlist = subsummarydict[pick.split('.')[0]]
+        if subsummarydict:
+            partlist = subsummarydict[pick.split('.')[0]]
+        else:
+            partlist = None
         pathtopickle = os.path.join(pathtotimecourse, pick)
-        with open(pathtopickle, 'r') as picktemp:
+        with open(pathtopickle, 'rb') as picktemp:
             timecoursedict = pickle.load(picktemp)
         outpickdict = create_finalpart_dict(timecoursedict, partlist)
         pathtopickle = os.path.join(pathtofinalstructures, pick)
-        with open(pathtopickle, 'w') as topickle:
-            pickle.dump(outpickdict, topickle)
+        with open(pathtopickle, 'wb') as topickle:
+            pickle.dump(outpickdict, topickle, protocol=2)
 
 def create_finalpart_dict(timecoursedict, listsofparts=None):
     """helper function to final structure
@@ -154,28 +157,48 @@ def create_finalpart_dict(timecoursedict, listsofparts=None):
     :type listofparts: list
     """
     tempdict = {}
-    for partindex in listsofparts:
-        part = partindex[0]
-        tempdict[part] = {}
-        start = partindex[1] - 1 #shift to account for indexing
-        stop = partindex[2]
+    if not listsofparts:
         listofdotbracket = []
         listofsequences = []
+        dictofenergy = {}
         for runnumber in timecoursedict:
-            listofdotbracket.append(
-                timecoursedict[runnumber]['dotbracket'][-1][start:stop])
-            listofsequences.append(
-                timecoursedict[runnumber]['sequence'][-1][start:stop])
+            if timecoursedict[runnumber]['dotbracket']:
+                listofdotbracket.append(
+                    timecoursedict[runnumber]['dotbracket'][-1])
+                listofsequences.append(
+                    timecoursedict[runnumber]['sequence'][-1])
+                dictofenergy[timecoursedict[runnumber]['dotbracket'][-1]] = timecoursedict[runnumber]['energy'][-1]
         dotbracketcount = Counter(listofdotbracket)
         sequencecount = Counter(listofsequences)
-        if len(sequencecount) > 1:
-            print "Sequences DONOT match up for {}".format(part)
-        #Convert count to average
         totalcount = float(sum(dotbracketcount.viewvalues()))
         for dotbrac in dotbracketcount:
             dotbracketcount[dotbrac] /= totalcount
-        tempdict[part]['sequence'] = sequencecount.keys()[0]
-        tempdict[part]['dotbracket'] = dotbracketcount
+        tempdict['energy'] = dictofenergy
+        tempdict['sequence'] = sequencecount.keys()[0]
+        tempdict['dotbracket'] = dotbracketcount
+    else:
+        for partindex in listsofparts:
+            part = partindex[0]
+            tempdict[part] = {}
+            start = partindex[1] - 1 #shift to account for indexing
+            stop = partindex[2]
+            listofdotbracket = []
+            listofsequences = []
+            for runnumber in timecoursedict:
+                listofdotbracket.append(
+                    timecoursedict[runnumber]['dotbracket'][-1][start:stop])
+                listofsequences.append(
+                    timecoursedict[runnumber]['sequence'][-1][start:stop])
+            dotbracketcount = Counter(listofdotbracket)
+            sequencecount = Counter(listofsequences)
+            if len(sequencecount) > 1:
+                print "Sequences DONOT match up for {}".format(part)
+            #Convert count to average
+            totalcount = float(sum(dotbracketcount.viewvalues()))
+            for dotbrac in dotbracketcount:
+                dotbracketcount[dotbrac] /= totalcount
+            tempdict[part]['sequence'] = sequencecount.keys()[0]
+            tempdict[part]['dotbracket'] = dotbracketcount
     return tempdict
 
 ########################################################################

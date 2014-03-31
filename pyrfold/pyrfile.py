@@ -39,7 +39,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
             reader = csv.reader(csvfile)
             next(reader, None) #Skips the header
             for row in reader:
-                if row[0]:
+                if row:
                     # conditiondict['polrate'] = float(row[4])
                     # conditiondict['dwelltime'] = float(row[5])
                     # conditiondict['fiveprime'] = int(row[2])
@@ -58,7 +58,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
         reader = csv.reader(csvfile)
         next(reader, None) #Skips the header
         for row in reader:
-            if row[0]:
+            if row:
                 #defining the part name:(seq,lowbound,highbound)
                 devicetosequence[row[1]] = (row[0].upper(),
                                             int(row[2]),

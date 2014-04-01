@@ -15,6 +15,89 @@ operations smooth and easy to use
 # Modules
 ###
 from random import choice
+from .. data import RNAINTERACTION
+from copy import copy
+from collections import Counter
+
+def recount_mer_interactions(designclassobj):
+    """
+    This only considers mer in a personal context of mers
+    This takes a counter and generates a new counter
+    """
+    counterofmers = designclassobj.mers
+    counterreference = copy(designclassobj.mers)
+    for fwmer in counterofmers:
+        #Turn find all complement mers
+        tempcomps = designclassobj.complexing_mers[fwmer]['complement']
+        tempcounter = Counter()
+        for compmer in tempcomps:
+            if compmer in counterofmers:
+                #Add to the the total
+                tempcounter[compmer] = counterofmers[compmer]
+        #Find the scaling factor
+        if sum(tempcounter.values()) == 0:
+            continue
+        tempscale = float(counterofmers[fwmer])/sum(tempcounter.values())
+        for revmer in tempcounter:
+            counterreference[revmer] -= tempscale
+    for mer in counterreference:
+        if counterreference[mer] < 0:
+            counterreference[mer] = 0
+    return counterreference
+
+def find_scaled_complexing_mers(context, part, exposedparts=False):
+    """
+    must be designsequence class
+    """
+    mersofconcern = Counter()
+    rescaledcontext = recount_mer_interactions(context)
+    #For every partmer find every possible context mer
+    for fwmer in rescaledcontext:
+        tempcounter = Counter()
+        revmers = RNAINTERACTION[len(fwmer)][fwmer]
+        for revmer in revmers:
+            if revmer in part.mers:
+                #The number of partmers that can complex
+                tempcounter[revmer] = part.mers[revmer]
+        mersofconcern[fwmer] = rescaledcontext[fwmer]*sum(tempcounter.values())
+    remlist = []
+    for mer in mersofconcern:
+        if mersofconcern[mer] == 0.:
+            remlist.append(mer)
+    for rem in remlist:
+        del mersofconcern[rem]
+    return mersofconcern
+
+    # for fwmer in part:
+    #     tempcounter = Counter()
+    #     for revmer in part[fwmer]['complement']:
+    #         if revmer in rescaledcontext:
+    #             tempcounter[revmer] = rescaledcontext[revmer]
+
+
+
+
+def find_complexing_mers(context, part, exposedparts=False):
+    """
+    These must be design sequence classes
+    """
+    mersofconcern = []
+    tempcontext = context.complexing_mers
+    if exposedparts:
+        temppart = part.complexing_exp_mers
+    else:
+        temppart = part.complexing_mers
+    for fwdmercon in tempcontext:
+        for fwdmerpart in temppart:
+            if fwdmercon in temppart[fwdmerpart]['complement']:
+                mersofconcern.extend(tempcontext[fwdmercon]['complement'])
+    return set(mersofconcern)
+
+def fraction_of_similarity(denominator, numerator):
+    """takes two sets returns the union/denominator
+    """
+    intersection = set(numerator).intersection(set(denominator))
+    return len(intersection)/float(len(denominator))
 
 def sequence_generator(n, nucleictype = 'DNA'):
     """Generates random sequences of nucleic acids
@@ -235,7 +318,8 @@ def similar_mers(desiredcomplementset, revcomplementset):
     # First chance to use set functions!
     return desiredcomplementset.intersection(revcomplementset)
 
-def sequence_similarity_fraction(sequence, listofsequences, tolerance, aboveorbelow):
+def sequence_similarity_fraction(sequence, listofsequences, tolerance,
+    aboveorbelow):
     """WEV this will count the number of sequences from the list which appear
     within the test insulating sequence"""
     totalnumberofsequences = len(listofsequences)

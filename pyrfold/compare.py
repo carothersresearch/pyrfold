@@ -16,65 +16,39 @@ Things TODO
 ########################################################################
 ############################ Modules ###################################
 ########################################################################
-def folding_frequency(referencepartdict, experimentpartdict):
+def folding_frequency(referencepartdict, experimentpartdict, foldcutoff=0.0,
+                        dominantstructure=False):
     """Compares experimentaldata to reference data to determine a realtive
     level of folding
-    :param referencepartdict: A list of the referencsturcutres with freq for
-        all parts
-    :type referencepartdict: dict [part:[[freq, dotbracket], ...]
+    :param referencepartdict: a finalstructure dictionary like object that
+        contains a list of parts with target structures
+    :type referencepartdict: dict {'parts':{partname:Counter(dotbracket:freq)}}
     :param experimentpartdict: A collection of all of the structures that
         appear for a given simulation run
-    :type experimentpartdict: dict [part:['dotrbacket']:[dotrbacket:freq]]
+    :type experimentpartdict: dict {'parts':{partname:Counter(dotbracket:freq)}}
     :return param: The collection of all the parts
     :return type: dict [part:frequency]
     """
     returndict = {}
-    for part in experimentpartdict:
+    for part in experimentpartdict['parts']:
         returndict[part] = 0.
-        if part not in referencepartdict:
+        if part not in referencepartdict['parts']:
             print "ERROR - part {} not in reference".format(part)
             break
         #Make the comparision
-        for freqdotbracket in referencepartdict[part]:
-            if freqdotbracket[1] in experimentpartdict[part]['dotbracket']:
-                returndict[part] += experimentpartdict[part]['dotbracket'][freqdotbracket[1]]
+        for expdotbracket in experimentpartdict['parts'][part]['dotbracket']:
+            if dominantstructure and \
+            (expdotbracket in
+                referencepartdict['parts'][part]['dotbracket'].most_common(1)):
+                returndict[part] += \
+                 experimentpartdict['parts'][part]['dotbracket'][expdotbracket]
+            elif expdotbracket in referencepartdict['parts'][part]['dotbracket']:
+                #Check to see if the reference part frequency is greater than
+                #The threshold
+                if experimentpartdict['parts'][part]['dotbracket'][expdotbracket] > foldcutoff:
+                    returndict[part] += \
+                     experimentpartdict['parts'][part]['dotbracket'][expdotbracket]
     return returndict
-
-def folding_frequency_one(refparttosequences,expparttosequences):
-    """130829 WEV
-    Custum script to generate the folding frequency data for the
-    big insulating sequence run
-    """
-    # First loop through all devices:
-    # concstruct name:{name stucture name:[[sequence,freq],...]}
-    # build general solution dictionary for every experiment:
-    exptofreqdict = {}
-    for exp in expparttosequences:
-        tempdict = {}
-        for part in expparttosequences[exp]:
-            freq = folding_part_in_any(refparttosequences[part],
-                expparttosequences[exp][part], 0)
-            tempdict[part] = freq
-        exptofreqdict[exp] = tempdict
-    return exptofreqdict
-
-def folding_part_in_any(refstuctures, expstructures, tolerance):
-    """(listoflist,listoflist,float)->float
-    this function will compare all unique experimenal structures to the
-    unique reference structures. If exp match any of the target folds
-    it is seen as a success
-
-    2013-12-11 16:20 listoflist = [[freq,dotbracket],[freq, dotrbacket]]
-    This was changed to reflect this
-    """
-    output = 0
-    for exppart in expstructures:
-        for refpart in refstuctures:
-            if refpart[1] in exppart[1]:
-                #This adds the number of parts that were in the correct struct
-                output += float(exppart[0])
-                break
-    return output
 
 def select_winners(resultsofpreviousround, foldfreqcuttoff):
     """2013-09-11 14:02

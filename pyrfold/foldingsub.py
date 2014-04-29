@@ -4,9 +4,9 @@ class FoldingSubData(object):
     simulations as well.
     """
     def __init__(self, name, sequence, windowstart=0, windowstop=0,
-        partstartstoplist=[], partnamelist=[], forcedhelixes=[], polrate=30,
-        foldtimeafter=1, experimenttype=2, pseudoknots=0, entanglements=0,
-        numberofsimulations=10):
+        partstartstoplist=[], partnamelist=[], referencepart=None,
+        forcedhelixes=[], polrate=30, foldtimeafter=1, experimenttype=2,
+        pseudoknots=0, entanglements=0, numberofsimulations=10):
         #Name of the device
         self.name = name
         #Total sequence of the submitted sequence
@@ -17,6 +17,7 @@ class FoldingSubData(object):
         #Collectin of parts and their corresponding names
         self.partstartstoplist = partstartstoplist
         self.partnamelist = partnamelist
+        self.positionrefpart = referencepart
         #Defining fixed helix interactions for simulations
         #[leftstart, rightstart, length]
         self.forcedhelixes = forcedhelixes
@@ -44,8 +45,8 @@ class FoldingSubData(object):
         numberofsimulations = int(listfromcsv[4])
         partstartstoplist = []
         partnamelist = []
-        if len(listfromcsv) > 19:
-            for i in range(19, len(listfromcsv) - 1, 3):
+        if len(listfromcsv) > 20:
+            for i in range(20, len(listfromcsv) - 1, 3):
                 if listfromcsv[i]:
                     partnamelist.append(listfromcsv[i])
                     partstartstoplist.append([int(listfromcsv[i+1]),
@@ -57,15 +58,18 @@ class FoldingSubData(object):
                     forcedhelixes.append([int(listfromcsv[index]),
                                           int(listfromcsv[index + 1]),
                                           int(listfromcsv[index + 2])])
+        positionrefpart = listfromcsv[19]
+        if not positionrefpart:
+            positionrefpart = None
         polrate = float(listfromcsv[5])
         foldtimeafter = float(listfromcsv[6])
         experimenttype = int(listfromcsv[7])
         pseudoknots = int(listfromcsv[8])
         entanglements = int(listfromcsv[9])
         output = cls(name, sequence, windowstart, windowstop,
-                    partstartstoplist, partnamelist, forcedhelixes, polrate,
-                    foldtimeafter, experimenttype, pseudoknots, entanglements,
-                    numberofsimulations)
+                    partstartstoplist, partnamelist, positionrefpart,
+                    forcedhelixes, polrate, foldtimeafter, experimenttype,
+                    pseudoknots, entanglements, numberofsimulations)
         return output
 
     def generate_csv_line(self):
@@ -87,6 +91,10 @@ class FoldingSubData(object):
                 outputlist.extend(self.forcedhelixes[i])
             else:
                 outputlist.extend(['','',''])
+        if self.positionrefpart:
+            outputlist.append(self.positionrefpart)
+        else:
+            outputlist.append('')
         for counter, partname in enumerate(self.partnamelist):
             outputlist.append(partname)
             outputlist.extend(self.partstartstoplist[counter])
@@ -115,7 +123,14 @@ class FoldingSubData(object):
             tempstartstop[1] += -start
             self.adjustedpartstartstop[partname] = tempstartstop
 
-
+    def part_start_stop(self, partname):
+        """This will return a the start and stop position of a part
+        if it exists within the dictionary"""
+        for counter, part in enumerate(self.partnamelist):
+            if part == partname:
+                return self.partstartstoplist[counter]
+            else:
+                print "Part " + partname + " not in partlist"
 
 
 

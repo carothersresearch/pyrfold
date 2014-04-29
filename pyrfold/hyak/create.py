@@ -193,6 +193,8 @@ def calculate_number_of_nodes(devicenametosubobj, nodes):
     for device in devicenametosubobj:
         numberofjobs += devicenametosubobj[device].numberofsimulations
     #Calculate the number of jobs to go per node
+    if nodes == 'auto':
+        nodes = 2
     jobspernode = math.ceil(numberofjobs/nodes)
     for node in range(nodes):
         outdict[node] = []

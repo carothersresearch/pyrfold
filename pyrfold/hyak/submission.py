@@ -8,7 +8,7 @@ import csv
 from . import create
 from .. import pyrfile
 
-def submit_file(filepath, writedirectory, email, cores=12, backfill=True,
+def submit_file(filepath, writedirectory, email, cores=16, backfill=True,
                         nameofexperiment='auto', nodes='auto'):
     """2014-01-24 09:52 WEV
     :param filepath: path to the hyak submission file
@@ -77,8 +77,8 @@ def submit_basic_hyak_framework(myscriptlinksdirectory):
     call(callcommand, shell=True)
 
 ############## RESUBMISSION STUFF ######################################
-def additional_round_submission(performdict, cursubpath, foldcutoff,
-            nextroundpath, listofconditions, submissiondata):
+def additional_round_submission(performdict, summarydata, foldcutoff,
+            nextroundpath, poldwell, fivethreeshift, email, numsimulations):
     """ This is used to submit an additional round of simulations based on
     a greedy selection
     :param performdict:
@@ -93,7 +93,6 @@ def additional_round_submission(performdict, cursubpath, foldcutoff,
     :type listofconditions:
     :param submissiondata: [email, numberofsimulations]
     :type submissiondata: list
-
     TODO - unhardcode this additional round sub
     """
     #Select the winners
@@ -106,38 +105,30 @@ def additional_round_submission(performdict, cursubpath, foldcutoff,
                 fail = True
         if not fail:
             listofdevices.append(device)
-    #Pass the devices with the former spreadsheet to make a new spreadsheet
-    nextsubfilelist = []
-    with open(cursubpath, 'rU') as csvfile:
-        reader = csv.reader(csvfile)
-        nextsubfilelist.append(next(reader))
-        for row in reader:
-            if row[1] in listofdevices:
-                #Now have to change the values 18, 19, 20
-                #windowstart = partstart - shift
-                row[2] = int(row[19]) - listofconditions[2]
-                #Right window
-                row[3] = listofconditions[3] + int(row[20])
-                #Pol Rate
-                row[4] = listofconditions[0]
-                #dwell time
-                row[5] = listofconditions[1]
-                nextsubfilelist.append(row)
+    #The sub_summary data contains all of the parts of interest
+    nextroundsubdict = {}
+    for device in listofdevices:
+        tempsubobj = summarydata[device]
+        if fivethreeshift[0] or fivethreeshift[1]:
+            relativepositionpart = tempsubobj.positionrefpart
+            relpartstartstop = tempsubobj.part_start_stop(relativepositionpart)
+            if fivethreeshift[0]:
+                tempsubobj.winodwstart = relpartstartstop[0] - fivethreeshift[0]
+            if fivethreeshift[1]:
+                tempsubobj.windowstop = relpartstartstop[1] + fivethreeshift[1]
+        tempsubobj.polrate = poldwell[0]
+        tempsubobj.foldtimeafter = poldwell[1]
+        tempsubobj.numberofsimulations = numsimulations
+        nextroundsubdict[device] = tempsubobj
     #Get the name of the next round
     nextroundname = os.path.basename(nextroundpath)
-    subfiledirectory = os.path.dirname(cursubpath)
+    subfiledirectory = os.path.dirname(nextroundpath)
     #Print the next sub file
-    pathtonewsub = os.path.join(subfiledirectory, nextroundname + '_sub.csv')
-    with open(pathtonewsub , 'w') as csvfile:
-        writer = csv.writer(csvfile)
-        for row in nextsubfilelist:
-            writer.writerow(row)
+    pathtonewsub = os.path.join(subfiledirectory, nextroundname)
+    pyrfile.filled_in_form(pathtonewsub, nextroundsubdict)
     #Submit the file that was just written
     submit_file(pathtonewsub, os.path.dirname(pathtonewsub),
-        submissiondata[0], numberofsimulations=submissiondata[1])
-
-#holdovers yet to be sorted
-
+        email, cores=16, backfill=False, nodes=2)
 
 def combine_sequences_calculate_windowranges(listofsequencecomponents, partindextopartname, windowsize, shiftfraqthree):
     """should simply stitch together components and deterimine the proper

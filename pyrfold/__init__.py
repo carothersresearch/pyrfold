@@ -4,6 +4,7 @@ from . import hyak
 from . import compare
 from . import pyrfile
 from . import design
+from . foldingsub import FoldingSubData
 
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature."""
@@ -13,16 +14,3 @@ class AutoVivification(dict):
         except KeyError:
             value = self[item] = type(self)()
             return value
-
-class KineSubData:
-    def __init__(self):
-        self.sequence =""
-        self.windowstart = 0
-        self.windowstop = 0
-        self.partstartstoplist = []
-        self.partnamelist = []
-        self.polrate = 30
-        self.foldtimeafter = 1
-        self.experimenttype = 2
-        self.pseudoknots = 0
-        self.entanglements = 0

@@ -39,6 +39,7 @@ import pyrfold.hyak.submission as sub
 
 NAMEOFDIRECTORYLIST = []
 EMAIL = ''
+finalstructure = 1
 
 ####################  FILL IN ##########################################
 ########################################################################
@@ -51,7 +52,7 @@ NAMEOFPROCESSINGFOLDER = 'hyakprocessing' #all processing will be done this dir
 PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, 'pyrfold', 'hyak', 'scripts',
                          PROCESSINGSCRIPTNAME)
 shutil.copy(PATHTOPROCESSINGSCRIPT, ROOT)
-NUMBEROFCORES = int(raw_input("Number of cores (8, 12, 16): "))
+NUMBEROFCORES = 16 #int(raw_input("Number of cores (8, 12, 16): "))
 NUMBEROFNODES = 1
 PATHTOPARMS = hyakcreate.framework_shell(os.path.join(ROOT,
     NAMEOFPROCESSINGFOLDER))
@@ -83,7 +84,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
                     txtfile.write('timecourse')
                     txtfile.write('\n')
                     #Final Structure
-                    txtfile.write('0')
+                    txtfile.write(str(finalstructure))
                     txtfile.write('\n')
                     #Single directory(as opposed to all output)
                     txtfile.write('1')
@@ -95,17 +96,17 @@ for directoryname in NAMEOFDIRECTORYLIST:
                     txtfile.write(os.path.join(EXPPATH, 'proc_output'))
                     txtfile.write('\n')
                     #Get the reference files
-                    txtfile.write(os.path.join(EXPPATH, 'sub_summary.csv'))
+                    txtfile.write(os.path.join(EXPPATH, 'sub_summary.p'))
                     txtfile.write('\n')
 
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)
-os.chdir(NAMEOFPROCESSINGFOLDER)
-hyakcreate.mybundle_sub(EMAIL, NUMBEROFCORES, 1,
+#os.chdir(NAMEOFPROCESSINGFOLDER)
+pathtoframework = os.path.join(ROOT, NAMEOFPROCESSINGFOLDER)
+hyakcreate.mybundle_sub(pathtoframework, EMAIL, NUMBEROFCORES, 1,
                                  '15:00:00', 'highthroughputproc')
-hyakcreate.general_myscript_sub(CALLCOMMAND)
-ROOT = os.getcwd()
-hyakcreate.symlinks('MyScript.sh', os.path.join(ROOT,'myscript-parms'),
-                 os.path.join(ROOT,'myscript-links'), '*.txt')
+hyakcreate.general_myscript_sub(pathtoframework, CALLCOMMAND)
+hyakcreate.symlinks(os.path.join(pathtoframework, 'MyScript.sh'), os.path.join(pathtoframework,'myscript-parms'),
+                 os.path.join(pathtoframework,'myscript-links'), '*.txt')
 
 #Submit the file
-sub.submit_basic_hyak_framework(os.path.join(ROOT,'myscript-links'))
+sub.submit_basic_hyak_framework(os.path.join(pathtoframework,'myscript-links'))

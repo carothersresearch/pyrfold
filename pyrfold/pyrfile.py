@@ -13,25 +13,28 @@ easier to work with
 import os
 import glob
 import csv
+from  .foldingsub import FoldingSubData
+import cPickle as pickle
 
 ########################################################################
 ############################   Read  ###################################
 ########################################################################
-def sub_file(inputfile, justexperimentalconditions=False):
-    """(str) -> {str:tuple}, {str:list}, {str:tuple}
-    This should read the contents of the csv and present all of the information
-    contained in two dictionaries
 
-    >>> py_design_input_reader('test.csv')
-        ({'TestName1': ('ACDGADDDDDD', 1, 2),
-        'TestName2': ('ABSFDSADSFA', 1, 17),
-        'TestName3': ('ABSFDSADSFADS', 1, 17)},
-        {'TestName1': [['apple', 1, 3], ['zinc', 1, 2]],
-        'TestName2': [['time', 1, 2]],
-        'TestName3': [['time', 1, 2], ['pep', 1, 2]]},
-        {'TestName1': (12,2),
-        'TestName2': (113,3),
-        'TestName3': (12,5)})
+def load_pickled_sub_summary(picklefilepath):
+    """The inputfile contains data that is stored as a pickled data structure
+    this function simply loads that structure and generates additional
+    information"""
+    with open(picklefilepath, 'rb') as temppickle:
+        outdict = pickle.load(temppickle)
+    #Make sure the additional data is generated
+    for device in outdict:
+        outdict[device].scale_parts_to_window()
+    return outdict
+
+def sub_file(inputfile, justexperimentalconditions=False):
+    """ This will go through a submission file and create a dicitonary
+    which contains FoldingSubData objecs which can be used to write
+    all submission files
     """
     if justexperimentalconditions:
         # conditiondict = {}
@@ -46,55 +49,15 @@ def sub_file(inputfile, justexperimentalconditions=False):
                     # conditiondict['threeprime'] = int(row[3])
                     # return conditiondict
                     return [row[4], row[5], row[2], row[3]]
-    #initalizing variables:
-    devicetosequence = {}
-    devicetopart = {}
-    devicetokinefoldparms = {}
-    #Dictionary containing entanglements, cotrans, psudoknots
-    devicetoexperimentalparms = {}
-    devicetoforced = {}
-    #Exctracting data
+    outdict = {}
     with open(inputfile, 'rU') as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None) #Skips the header
         for row in reader:
             if row:
-                #defining the part name:(seq,lowbound,highbound)
-                devicetosequence[row[1]] = (row[0].upper(),
-                                            int(row[2]),
-                                            int(row[3]))
-                # polymerization, time after elongation (sec)
-                devicetokinefoldparms[row[1]] = (float(row[4]), float(row[5]))
-                #grabbing all of the part entries
-                #They are stored in the end of the sheet
-                #There are three things needed for device name,left,right
-                # position
-                devicetoexperimentalparms[row[1]] = (float(row[6]),
-                                                float(row[7]), float(row[8]))
-                #Collect forced Helix data
-                forcedhelixes = []
-                if len(row) > 10:
-                    for index in range(9, 18, 3):
-                        if row[index]:
-                            forcedhelixes.append([int(row[index]),
-                                                  int(row[index + 1]),
-                                                  int(row[index + 2])])
-                templist = []
-                if len(row) > 18:
-                    for i in range(18, len(row) - 1, 3):
-                        if row[i]:
-                            templist.append([row[i],
-                                            int(row[i+1]),
-                                            int(row[i+2]),
-                    devicetosequence[row[1]][0][int(row[i+1]) - 1: int(row[i+2])]])
-                        #Last step adds the sequence of the part to the list
-                        #1 is subtracked to account from the 1 to 0 index
-                        #it is only subtracked from the low bound because of how
-                        #python counts [n:c] calls
-                devicetopart[row[1]] = templist
-                devicetoforced[row[1]] = forcedhelixes
-    return devicetosequence, devicetopart, devicetokinefoldparms, \
-             devicetoexperimentalparms, devicetoforced
+                tempsubdata = FoldingSubData.from_csv_sub_file_line(row)
+                outdict[tempsubdata.name] = tempsubdata
+    return outdict
 
 def sub_summary(filename):
     """(filename)->dict(partname:window)
@@ -288,7 +251,7 @@ def submission(devicetosequence, devicetopart, devicetokinefoldparms,
         f.write('\n')
     f.close()
 
-def filled_in_form(filename, dicty):
+def filled_in_form(filename, devicenametosubobj):
     """()-> csv file to fill in
     This should simply create an empty submission file for submission
     dicty = {name: KineSubData class}
@@ -297,8 +260,10 @@ def filled_in_form(filename, dicty):
     But it will work without forced data and parts
     """
     with open(filename + '.csv', 'wb') as f:
+        writer = csv.writer(f)
         headers = ['sequence', 'name', 'window start',
-                   'window stop', 'Polymerization Rate (nt/s)',
+                   'window stop', 'numberofsimulations',
+                    'Polymerization Rate (nt/s)',
                    'Folding time after elongation (s)',
                    '1 renaturation 2 contrans',
                    'psudoknots 0 no 1 yes',
@@ -313,32 +278,10 @@ def filled_in_form(filename, dicty):
             headers.append('part start')
             headers.append('part stop')
            #writing headers
-        for head in headers:
-            f.write(head + ',')
-        f.write('\n')
-        for name in dicty:
-            f.write(dicty[name].sequence + ',') #sequence
-            f.write(name + ',') #name
-            #windowStartStop[]
-            f.write(str(dicty[name].windowstart) + ',' +
-                                        str(dicty[name].windowstop) + ',')
-            #polrate
-            f.write(str(dicty[name].polrate) + ',')
-            #folding time after elongation
-            f.write(str(dicty[name].foldtimeafter) + ',')
-            #Contrans or renaturation
-            f.write(str(dicty[name].experimenttype) + ',')
-            #psuedonots
-            f.write(str(dicty[name].pseudoknots) + ',')
-            #entanglments
-            f.write(str(dicty[name].entanglements) + ',')
-            partnamelist = dicty[name].partnamelist
-            partstartstoplist = dicty[name].partstartstoplist
-            for index, partname in enumerate(partnamelist):
-                startstop = partstartstoplist[index]
-                f.write(partname + ',' + str(startstop[0]) + ',' +
-                                                    str(startstop[1]) +',')
-            f.write('\n')
+        writer.writerow(headers)
+        for devicename in devicenametosubobj:
+            linetowrite = devicenametosubobj[devicename].generate_csv_line()
+            writer.writerow(linetowrite)
 
 def blank_form(filename):
     """()-> csv file to fill in
@@ -346,7 +289,8 @@ def blank_form(filename):
     """
     f = open(filename + '.csv', 'wb')
     headers = ['sequence', 'name', 'window start',
-                   'window stop', 'Polymerization Rate (nt/s)',
+                   'window stop', 'numberofsimulations',
+                   'Polymerization Rate (nt/s)',
                    'Folding time after elongation (s)',
                    '1 renaturation 2 contrans',
                    'psudoknots 0 no 1 yes',

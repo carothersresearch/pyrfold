@@ -8,8 +8,8 @@ import csv
 from . import create
 from .. import pyrfile
 
-def submit_file(filepath, writedirectory, email, numberofsimulations=100,
-                            cores=12, nameofexperiment='auto', nodes='auto'):
+def submit_file(filepath, writedirectory, email, cores=12, backfill=True,
+                        nameofexperiment='auto', nodes='auto'):
     """2014-01-24 09:52 WEV
     :param filepath: path to the hyak submission file
     :type filepath: str
@@ -17,26 +17,34 @@ def submit_file(filepath, writedirectory, email, numberofsimulations=100,
     :type writedirectory: str
     :param email: Email address which will recieve hyak updates on experiment
     :type email: str
+    :param numberofsimulations: The total number of simulations to run for a
+        specific simulations.
+    :type numberofsimulations: int
+    :param cores: number of cores a node will have (this is important for
+        submission like things)
+    :type cores: int
+    :param nameofexperiment: Name of the experiment that will be displayed in
+        hyak display and referenced in emails.
+    :type nameofexperiment: str
+    :param nodes: The number of nodes to run the simulations on. If 'auto' it
+        will make an approximation for the nodes based on simulations requested
+    :type nodes: int, str
     """
     #Define all of the needed variables
     experimentname = os.path.basename(filepath).split('.')[0]
     experimentpath = os.path.join(writedirectory, experimentname)
-    (devicetosequence, devicetopart, devicetokinefoldparms,
-     devicetoexperimentalparms,
-     devicetoforced)  = pyrfile.sub_file(filepath)
+    devicenametosubobj = pyrfile.sub_file(filepath)
     if nameofexperiment == 'auto':
         nameofexperiment = experimentname
     #Make the directory
     if not os.path.exists(experimentpath):
         os.makedirs(experimentpath)
     #Make the sub summary
-    pyrfile.submission(devicetosequence, devicetopart,
-                    devicetokinefoldparms, devicetoexperimentalparms,
-                    experimentpath)
-    create.framework(experimentpath, devicetosequence,
-        devicetokinefoldparms, devicetoexperimentalparms, cores,
-        numberofsimulations, nameofexperiment, devicetoforced, email,
-         nodes=nodes)
+    # pyrfile.submission(devicetosequence, devicetopart,
+    #                 devicetokinefoldparms, devicetoexperimentalparms,
+    #                 experimentpath)
+    create.framework(experimentpath, devicenametosubobj, cores,
+        nameofexperiment, email, backfill=backfill, nodes=nodes)
     #submit files for simulation
     submit_multiple_nodes(experimentpath)
 

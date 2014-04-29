@@ -50,7 +50,7 @@ if PROCESSINGTYPE == 'timecourse':
         #Consolidate the data into a final structure file
         ##Get the reference files
         SUBSUMMARYFILE = INPUTFILE.next().strip()
-        SUBSUMMARYDATA = pyrfile.sub_summary(SUBSUMMARYFILE)
+        SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
         ##process to single files
         NAMEOFFOLDER = os.path.basename(FOLDERTOPROCESS)
         if SINGLEDIRECTORY:

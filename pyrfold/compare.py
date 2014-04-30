@@ -30,6 +30,7 @@ def folding_frequency(referencepartdict, experimentpartdict, foldcutoff=0.0,
     :return type: dict [part:frequency]
     """
     returndict = {}
+    #print referencepartdict
     for part in experimentpartdict['parts']:
         returndict[part] = 0.
         if part not in referencepartdict['parts']:
@@ -48,7 +49,6 @@ def folding_frequency(referencepartdict, experimentpartdict, foldcutoff=0.0,
                 if experimentpartdict['parts'][part]['dotbracket'][expdotbracket] > foldcutoff:
                     returndict[part] += \
                      experimentpartdict['parts'][part]['dotbracket'][expdotbracket]
-
     return returndict
 
 def select_winners(resultsofpreviousround, foldfreqcuttoff):

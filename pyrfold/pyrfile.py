@@ -19,6 +19,40 @@ import cPickle as pickle
 ########################################################################
 ############################   Read  ###################################
 ########################################################################
+def filled_in_form(filename, devicenametosubobj):
+    """()-> csv file to fill in
+    This should simply create an empty submission file for submission
+    dicty = {name: KineSubData class}
+
+    TODO URGENT this is not working for the current submission system
+    But it will work without forced data and parts
+    """
+    if '.csv' not in filename:
+        filename += '.csv'
+    with open(filename, 'wb') as f:
+        writer = csv.writer(f)
+        headers = ['sequence', 'name', 'window start',
+                   'window stop', 'numberofsimulations',
+                    'Polymerization Rate (nt/s)',
+                   'Folding time after elongation (s)',
+                   '1 renaturation 2 contrans',
+                   'psudoknots 0 no 1 yes',
+                   'entanglements 0 no 1 yes']
+                   #'sequence from experiment', 'size of sequence']
+                   #will try to incldue this information in a summary file
+        forcedlist = ['forced start', 'forced stop', 'forced size']
+        for i in range(3):
+            headers.extend(forcedlist)
+        headers.append('posrefpart')
+        for i in range(5):
+            headers.append('part' + str(i+1))
+            headers.append('part start')
+            headers.append('part stop')
+           #writing headers
+        writer.writerow(headers)
+        for devicename in devicenametosubobj:
+            linetowrite = devicenametosubobj[devicename].generate_csv_line()
+            writer.writerow(linetowrite)
 
 def load_pickled_sub_summary(picklefilepath):
     """The inputfile contains data that is stored as a pickled data structure
@@ -29,6 +63,14 @@ def load_pickled_sub_summary(picklefilepath):
     #Make sure the additional data is generated
     for device in outdict:
         outdict[device].scale_parts_to_window()
+    return outdict
+
+def load_pickled_reference_sub(picklefilepath):
+    """he inputfile contains data that is stored as a pickled data structure
+    this function simply loads that structure and generates additional
+    information"""
+    with open(picklefilepath, 'rb') as temppickle:
+        outdict = pickle.load(temppickle)
     return outdict
 
 def sub_file(inputfile, justexperimentalconditions=False):
@@ -202,38 +244,7 @@ def get_round_summaries_data(filename):
 ############################   Write  ##################################
 ########################################################################
 
-def filled_in_form(filename, devicenametosubobj):
-    """()-> csv file to fill in
-    This should simply create an empty submission file for submission
-    dicty = {name: KineSubData class}
 
-    TODO URGENT this is not working for the current submission system
-    But it will work without forced data and parts
-    """
-    with open(filename + '.csv', 'wb') as f:
-        writer = csv.writer(f)
-        headers = ['sequence', 'name', 'window start',
-                   'window stop', 'numberofsimulations',
-                    'Polymerization Rate (nt/s)',
-                   'Folding time after elongation (s)',
-                   '1 renaturation 2 contrans',
-                   'psudoknots 0 no 1 yes',
-                   'entanglements 0 no 1 yes']
-                   #'sequence from experiment', 'size of sequence']
-                   #will try to incldue this information in a summary file
-        forcedlist = ['forced start', 'forced stop', 'forced size']
-        for i in range(3):
-            headers.extend(forcedlist)
-        headers.append('posrefpart')
-        for i in range(5):
-            headers.append('part' + str(i+1))
-            headers.append('part start')
-            headers.append('part stop')
-           #writing headers
-        writer.writerow(headers)
-        for devicename in devicenametosubobj:
-            linetowrite = devicenametosubobj[devicename].generate_csv_line()
-            writer.writerow(linetowrite)
 
 def blank_form(filename):
     """()-> csv file to fill in

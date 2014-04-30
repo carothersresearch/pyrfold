@@ -116,7 +116,6 @@ if PROCESSINGTYPE == 'additionalround':
             tempcomparedict = compare.folding_frequency(REFSTRUCT,
                                                                 tempfinaldict)
             STATDICT[devicename] = tempcomparedict
-    print STATDICT
     #Build the roundsummary folder
     if not os.path.exists(SUMMARYPATH):
         os.mkdir(SUMMARYPATH)

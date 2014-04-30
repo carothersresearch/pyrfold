@@ -12,13 +12,11 @@ from pyrfold.hyak import submission
 LISTOFDIRECTORIES = ['ASBV-1', 'ASBV-3', 'Sman', 'sTRSV-3']
 subfilename = 'round-1_sub.csv'
 EMAIL = 'wmvoje@uw.edu'
-NUMBEROFSIMULATIONS = 8
-NUMBEROFNODES = 'auto'
+NUMBEROFNODES = 2
 
 ROOT = os.getcwd()
 for direct in LISTOFDIRECTORIES:
     temppath = os.path.join(ROOT, direct, subfilename)
     SUBROOT = os.path.join(ROOT, direct)
-    submission.submit_file(temppath, SUBROOT, EMAIL,
-        numberofsimulations=NUMBEROFSIMULATIONS, nodes=NUMBEROFNODES)
+    submission.submit_file(temppath, SUBROOT, EMAIL, nodes=NUMBEROFNODES)
 

@@ -62,6 +62,8 @@ if PROCESSINGTYPE == 'timecourse':
 if PROCESSINGTYPE == 'additionalround':
     #This will be linked to a job file that is submitted after
     #all other files have been submitted
+    #just summary data
+    JUSTSUMMARY = int(INPUTFILE.next().strip())
     #Path to timecourse and final data:
     PROCESSEDDIRECTORY = INPUTFILE.next().strip()
     #Path to summary files directory
@@ -79,8 +81,16 @@ if PROCESSINGTYPE == 'additionalround':
     #Next positions of the simulation
     POLRATE = float(INPUTFILE.next().strip())
     DWELLTIME = float(INPUTFILE.next().strip())
-    FIVEPOS = int(INPUTFILE.next().strip())
-    THREEPOS = int(INPUTFILE.next().strip())
+    FIVEPOS = INPUTFILE.next().strip()
+    THREEPOS = INPUTFILE.next().strip()
+    if FIVEPOS == 'None':
+        FIVEPOS = None
+    else:
+        FIVEPOS = int(FIVEPOS)
+    if THREEPOS == 'None':
+        THREEPOS = None
+    else:
+        THREEPOS = int(THREEPOS)
     #Number of simulations
     NUMBEROFSIMULATIONS = int(INPUTFILE.next().strip())
     EMAIL = INPUTFILE.next().strip()

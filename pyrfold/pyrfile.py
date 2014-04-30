@@ -201,55 +201,6 @@ def get_round_summaries_data(filename):
 ########################################################################
 ############################   Write  ##################################
 ########################################################################
-def submission(devicetosequence, devicetopart, devicetokinefoldparms,
-                    devicetoexperimentalparms, directorypath):
-    """(dict, dict, dict) -> csv containing the summary of what
-    was requested by the submission document
-    """
-    filepath = os.path.join(directorypath, 'sub_summary.csv')
-    f = open(filepath, 'wb')
-    #create header
-    headers = ['name', 'windowed sequence', 'Polymerization Rate (nt/s)',
-               'Folding time after elongation (s)', '1 renaturation 2 contrans', 'psudoknots 0 no 1 yes', 'entanglements 0 no 1 yes']
-               #'sequence from experiment', 'size of sequence']
-               #will try to incldue this information in a summary file
-    for i in range(5):
-        headers.append('part' + str(i+1))
-        headers.append('part start')
-        headers.append('part stop')
-     #writing headers
-    for name in headers:
-        f.write(name + ',')
-    f.write('\n')
-    #shift the part windows to the window sequence
-    for device, devicedata in devicetosequence.iteritems():
-        #initializing bounds
-        #devicetopart[device] should be a [[],[]]
-        seq = devicedata[0]
-        start = int(devicedata[1])
-        stop = int(devicedata[2])
-        seq = seq[start - 1: stop]
-        #write name of device
-        f.write(device + ',' + seq)
-        f.write(',')
-        f.write(str(devicetokinefoldparms[device][0]) + ',' +
-                str(devicetokinefoldparms[device][1]) + ',')
-        #Write experiment information
-        for experimentalparms in devicetoexperimentalparms[device]:
-            f.write(str(experimentalparms) + ',')
-
-        for part in devicetopart[device]:
-            #name, start shift, stop shift
-            f.write(part[0] + ',')
-            f.write(str(int(part[1]) - int(devicedata[1]) + 1) + ',')
-            f.write(str(int(part[2]) - int(devicedata[1]) + 1) + ',')
-            # shifted = [part[0], int(part[1]) - int(devicedata[1]) + 1,
-            #            int(part[2]) - int(devicedata[1]) + 1]
-        #     keytoadd.append(shifted)
-
-        # windowdevicetosequence[device] = keytoadd
-        f.write('\n')
-    f.close()
 
 def filled_in_form(filename, devicenametosubobj):
     """()-> csv file to fill in
@@ -273,6 +224,7 @@ def filled_in_form(filename, devicenametosubobj):
         forcedlist = ['forced start', 'forced stop', 'forced size']
         for i in range(3):
             headers.extend(forcedlist)
+        headers.append('posrefpart')
         for i in range(5):
             headers.append('part' + str(i+1))
             headers.append('part start')

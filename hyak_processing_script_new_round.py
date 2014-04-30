@@ -31,31 +31,44 @@ import shutil
 import os
 import pyrfold.hyak.create as hyakcreate
 import pyrfold.hyak.submission as sub
-
+###############################################################################
+###############################################################################
+###############################################################################
 #Define the experiment sub directories to be processed
 #MUST FULL IN
-NAMEOFDIRECTORYLIST = ['ASBV-1']
-NAMEOFROUND = 'round-1_sub'
+NAMEOFDIRECTORYLIST = ['test']
 EMAIL = 'wmvoje@uw.edu'
+#The experiment should have rounds set up
+NAMEOFROUND = 'round-1_sub'
 NAMEOFNEXTROUND = 'round-2'
-REFERENCEFILE = 'processed_reference_summary.csv'
+REFERENCEFILE = 'processed_reference_summary.p'
 ADDITIONALROUNDOFPROCESS = True
-JUSTSUMMARY = True
+JUSTSUMMARY = False
+#The folding cutoff that is imposed
 CUTOFFFREQ = 0.1
+#the variables you'd like to use for the next simulation
 POLRATE = 20
 DWELLTIME = 5
+#These positions are the window positions relative to the 5' and 3' positions
+#of the part
+# NOTE if you enter 'None' for fivepos and/or threepos there will be no shift
 FIVEPOS = 60
 THREEPOS = 40
+#Number of simulations to be run for every part
 NUMBEROFSIMULATIONS = 10
 
-#Do the work
+###############################################################################
+###############################################################################
+###############################################################################
+
+#The script should do the rest
 ROOT = os.getcwd()
 PROCESSINGSCRIPTNAME = 'delete_nodes_process_timecourse.py'
 NAMEOFPROCESSINGFOLDER = 'hyakprocessing' #all processing will be done this dir
 PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, 'pyrfold', 'hyak', 'scripts',
                          PROCESSINGSCRIPTNAME)
 shutil.copy(PATHTOPROCESSINGSCRIPT, ROOT)
-NUMBEROFCORES = int(raw_input("Number of cores (8, 12, 16): "))
+NUMBEROFCORES = 16 # int(raw_input("Number of cores (8, 12, 16): "))
 NUMBEROFNODES = 1
 PATHTOPARMS = hyakcreate.framework_shell(os.path.join(ROOT,
     NAMEOFPROCESSINGFOLDER))
@@ -106,7 +119,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
                         txtfile.write(os.path.join(EXPPATH, 'proc_output'))
                         txtfile.write('\n')
                         #Get the reference files
-                        txtfile.write(os.path.join(EXPPATH, 'sub_summary.csv'))
+                        txtfile.write(os.path.join(EXPPATH, 'sub_summary.p'))
                         txtfile.write('\n')
 
         if ADDITIONALROUNDOFPROCESS:
@@ -114,7 +127,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
                                             + '.txt'), 'wb') as txtfile:
                 txtfile.write('additionalround')
                 txtfile.write('\n')
-                #Just processe or not
+                #Just process or not
                 if JUSTSUMMARY:
                     txtfile.write('1')
                 else:
@@ -164,13 +177,13 @@ for directoryname in NAMEOFDIRECTORYLIST:
 
 
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)
-os.chdir(NAMEOFPROCESSINGFOLDER)
-hyakcreate.mybundle_sub(EMAIL, NUMBEROFCORES, 1,
+pathtoframework = os.path.join(ROOT, NAMEOFPROCESSINGFOLDER)
+hyakcreate.mybundle_sub(pathtoframework, EMAIL, NUMBEROFCORES, 1,
                     '15:00:00', 'highthroughputproc', finaljob=True)
-hyakcreate.general_myscript_sub(CALLCOMMAND)
-ROOT = os.getcwd()
-hyakcreate.symlinks('MyScript.sh', os.path.join(ROOT,'myscript-parms'),
-                 os.path.join(ROOT,'myscript-links'), '*.txt')
+hyakcreate.general_myscript_sub(pathtoframework, CALLCOMMAND)
+hyakcreate.symlinks(os.path.join(pathtoframework, 'MyScript.sh'),
+                    os.path.join(pathtoframework,'myscript-parms'),
+                    os.path.join(pathtoframework,'myscript-links'), '*.txt')
 
 #Submit the file
-sub.submit_basic_hyak_framework(os.path.join(ROOT,'myscript-links'))
+sub.submit_basic_hyak_framework(os.path.join(pathtoframework,'myscript-links'))

@@ -106,9 +106,9 @@ def sequence_generator(n, nucleictype = 'DNA'):
     nucleictype == 'R' #RNA
     """
     returnstring = ""
-    if nucleictype == 'D' or 'd' or 'DNA':
+    if nucleictype in ['D', 'd', 'DNA']:
         possiblebases = ['A', 'C', 'T', 'G']
-    if nucleictype == 'R' or 'r' or 'RNA':
+    elif nucleictype in ['R', 'r', 'RNA']:
         possiblebases = ['A', 'C', 'U', 'G']
     for i in range(n):
         returnstring += choice(possiblebases)

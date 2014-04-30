@@ -273,7 +273,7 @@ def mybundle_sub(directorypath, email, cores, nodes, walltime,
         # run the rest of them
         f.write("\nfind . -name job\* | parallel -j $HYAK_SLOTS --joblog paralleljobs.log --resume")
         if finaljob:
-            f.write("\nfind . -name finaljob\* | parallel -j $HYAK_SLOTS --joblog paralleljobs.log --resume")
+            f.write("\nfind . -name finaljob\* | parallel -j $HYAK_SLOTS --joblog parallelfinaljobs.log --resume")
         f.write("\nexit 0\n")
     os.chmod(pathtomybundle, 0777)
 

@@ -77,7 +77,7 @@ def submit_basic_hyak_framework(myscriptlinksdirectory):
     call(callcommand, shell=True)
 
 ############## RESUBMISSION STUFF ######################################
-def additional_round_submission(performdict, summarydata, foldcutoff,
+def additional_round_submission(performdict, currentsubpath, foldcutoff,
             nextroundpath, poldwell, fivethreeshift, email, numsimulations):
     """ This is used to submit an additional round of simulations based on
     a greedy selection
@@ -106,6 +106,7 @@ def additional_round_submission(performdict, summarydata, foldcutoff,
         if not fail:
             listofdevices.append(device)
     #The sub_summary data contains all of the parts of interest
+    summarydata = pyrfile.sub_file(currentsubpath)
     nextroundsubdict = {}
     for device in listofdevices:
         tempsubobj = summarydata[device]
@@ -124,7 +125,7 @@ def additional_round_submission(performdict, summarydata, foldcutoff,
     nextroundname = os.path.basename(nextroundpath)
     subfiledirectory = os.path.dirname(nextroundpath)
     #Print the next sub file
-    pathtonewsub = os.path.join(subfiledirectory, nextroundname)
+    pathtonewsub = os.path.join(subfiledirectory, nextroundname + '.csv')
     pyrfile.filled_in_form(pathtonewsub, nextroundsubdict)
     #Submit the file that was just written
     submit_file(pathtonewsub, os.path.dirname(pathtonewsub),

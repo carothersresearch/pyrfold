@@ -98,7 +98,7 @@ if PROCESSINGTYPE == 'additionalround':
     # Make the comparisions
     ####################################################################
     #Get the reference structures to make comaprisons to
-    REFSTRUCT = pyrfile.summary_refpart_to_sequence(REFERENCESUMMARYFILE)
+    REFSTRUCT = pyrfile.load_pickled_reference_sub(REFERENCESUMMARYFILE)
     #Grab all of the final structure data
     PATHTOFINALSTRUCTS = os.path.join(PROCESSEDDIRECTORY, 'finalstructure')
     #Grab all of the .p files for iteration
@@ -116,7 +116,7 @@ if PROCESSINGTYPE == 'additionalround':
             tempcomparedict = compare.folding_frequency(REFSTRUCT,
                                                                 tempfinaldict)
             STATDICT[devicename] = tempcomparedict
-
+    print STATDICT
     #Build the roundsummary folder
     if not os.path.exists(SUMMARYPATH):
         os.mkdir(SUMMARYPATH)
@@ -156,8 +156,8 @@ if PROCESSINGTYPE == 'additionalround':
     #Write hyakp.get_exp_conditions
     #BUILD OTHER SUBMISSION
     hyaks.additional_round_submission(STATDICT, CURRENTSUBMISSIONPATH,
-         FOLDINGCUTOFF, NEXTROUNDPATH, [POLRATE, DWELLTIME, FIVEPOS, THREEPOS],
-         [EMAIL, NUMBEROFSIMULATIONS])
+         FOLDINGCUTOFF, NEXTROUNDPATH, [POLRATE, DWELLTIME], [FIVEPOS, THREEPOS],
+         EMAIL, NUMBEROFSIMULATIONS)
 
 
 

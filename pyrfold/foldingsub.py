@@ -120,7 +120,7 @@ class FoldingSubData(object):
         for counter, partname in enumerate(self.partnamelist):
             tempstartstop = self.partstartstoplist[counter]
             tempstartstop[0] += -start + 1
-            tempstartstop[1] += -start
+            tempstartstop[1] += -start + 1
             self.adjustedpartstartstop[partname] = tempstartstop
 
     def part_start_stop(self, partname):

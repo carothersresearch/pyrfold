@@ -12,7 +12,7 @@ from pyrfold.hyak import submission
 LISTOFDIRECTORIES = ['ASBV-1', 'ASBV-3', 'Sman', 'sTRSV-3']
 subfilename = 'round-1_sub.csv'
 EMAIL = 'wmvoje@uw.edu'
-NUMBEROFNODES = '2'
+NUMBEROFNODES = 2
 
 ROOT = os.getcwd()
 for direct in LISTOFDIRECTORIES:

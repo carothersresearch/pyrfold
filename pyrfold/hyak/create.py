@@ -277,7 +277,7 @@ def mybundle_sub(directorypath, email, cores, nodes, walltime,
         f.write("\nexit 0\n")
     os.chmod(pathtomybundle, 0777)
 
-def framework_shell(pathtoframework, finaljob=False):
+def framework_shell(pathtoframework):
     """2013-12-16 16:02 WEV
     This will create all of the directories needed for the hyak
     framework

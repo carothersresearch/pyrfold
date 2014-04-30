@@ -48,6 +48,7 @@ def folding_frequency(referencepartdict, experimentpartdict, foldcutoff=0.0,
                 if experimentpartdict['parts'][part]['dotbracket'][expdotbracket] > foldcutoff:
                     returndict[part] += \
                      experimentpartdict['parts'][part]['dotbracket'][expdotbracket]
+
     return returndict
 
 def select_winners(resultsofpreviousround, foldfreqcuttoff):

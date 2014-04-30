@@ -129,8 +129,7 @@ class FoldingSubData(object):
         for counter, part in enumerate(self.partnamelist):
             if part == partname:
                 return self.partstartstoplist[counter]
-            else:
-                print "Part " + partname + " not in partlist"
+        print "Part " + partname + " not in partlist"
 
 
 

@@ -36,14 +36,14 @@ import pyrfold.hyak.submission as sub
 ###############################################################################
 #Define the experiment sub directories to be processed
 #MUST FULL IN
-NAMEOFDIRECTORYLIST = ['ASBV-1']
+NAMEOFDIRECTORYLIST = ['test']
 EMAIL = 'wmvoje@uw.edu'
 #The experiment should have rounds set up
 NAMEOFROUND = 'round-1_sub'
 NAMEOFNEXTROUND = 'round-2'
 REFERENCEFILE = 'processed_reference_summary.p'
 ADDITIONALROUNDOFPROCESS = True
-JUSTSUMMARY = True
+JUSTSUMMARY = False
 #The folding cutoff that is imposed
 CUTOFFFREQ = 0.1
 #the variables you'd like to use for the next simulation
@@ -179,7 +179,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)
 pathtoframework = os.path.join(ROOT, NAMEOFPROCESSINGFOLDER)
 hyakcreate.mybundle_sub(pathtoframework, EMAIL, NUMBEROFCORES, 1,
-                    '15:00:00', 'highthroughputproc', finaljob=JUSTSUMMARY)
+                    '15:00:00', 'highthroughputproc', finaljob=True)
 hyakcreate.general_myscript_sub(pathtoframework, CALLCOMMAND)
 hyakcreate.symlinks(os.path.join(pathtoframework, 'MyScript.sh'),
                     os.path.join(pathtoframework,'myscript-parms'),

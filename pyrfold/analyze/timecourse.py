@@ -20,8 +20,8 @@ class TimeCourseStructure:
 
     Requires an output dictionay structure that is output from hyak processing
     """
-    def __init__(self, dictionaryofruns=None, structurewindow=None, timescale=None,
-                    cutoff=0.0, rescale=False, maxlength=False):
+    def __init__(self, dictionaryofruns, structurewindow=None, timewindow=None,
+                        rescale=False, maxlength=False, cutoff=0.0):
         """
         This function initializes the object - the only thing required for
         this step is the dictionaryofruns
@@ -31,9 +31,9 @@ class TimeCourseStructure:
         :param structurewindow: The start and stop window that you want to look
             at - (this is 1 indexed!)
         :type structurewindow: list
-        :param timescale: The start and stop of the timewindow you want to
+        :param timewindow: The start and stop of the timewindow you want to
             consider
-        :type timescale:
+        :type timewindow:
         :param cutoff:
         :type cutoff:
         :param rescale:
@@ -51,40 +51,40 @@ class TimeCourseStructure:
         self.stats = {}
         if maxlength:
             self.structurewindow = _calculate_indexs_from_time(
-                                        self.dictionary, timescale)
+                                        self.dictionary, timewindow)
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                self.structurewindow, timescale, cutoff, rescale)
+                self.structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
                                         structurewindow[0] - 1: structurewindow[1]]
         elif structurewindow:
             if structurewindow[1] > len(self.__sequence):
                 structurewindow[1] = len(self.__sequence)
-                print 'readjusted max index'
+                print 'Requested max structure index was readjusted'
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                structurewindow, timescale, cutoff, rescale)
+                structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
                             self.structurewindow[0] - 1: self.structurewindow[1]]
 
-    def generate_data(self, structurewindow=None, timescale=None, cutoff=0.0,
+    def generate_data(self, structurewindow, timewindow=None, cutoff=0.0,
                         rescale=False, maxlength=None):
         # if structurewindow[1] > len(self.__sequence):
         #     structurewindow[1] = len(self.__sequence)
         #     print 'readjusted max index'
         if maxlength:
             self.structurewindow = _calculate_indexs_from_time(
-                                        self.dictionary, timescale)
+                                        self.dictionary, timewindow)
 
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                self.structurewindow, timescale, cutoff, rescale)
+                self.structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
                                 self.structurewindow[0] - 1: self.structurewindow[1]]
         else:
             (self.timedata, self.structures, self.stats) = \
                     _structure_evaluation(self.dictionary,
-                    structurewindow, timescale, cutoff, rescale)
+                    structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
                                         structurewindow[0] - 1: structurewindow[1]]
 
@@ -162,15 +162,15 @@ class TimeCourseStructure:
                 newtimelist.append(basetime + timelist[counter])
             newdict[runnumber]['dotbracket'] = deepcopy(newdotbracketlist)
             newdict[runnumber]['time'] = deepcopy(newtimelist)
-            sequence = dictionaryofruns[runnumber]['sequence'][-1]
+            sequence = dictionaryofruns[runnumber]['sequence']
         #print newdict
         return newdict, timeofbaseaddition, sequence
 
-def _calculate_indexs_from_time(dictionaryofruns, timescale):
+def _calculate_indexs_from_time(dictionaryofruns, timewindow):
     """ This serves to find the last possible base of the window
     sequence """
     output = [1, 0]
-    maxtime = timescale[1]
+    maxtime = timewindow[1]
     possiblemaxindexs = []
     for run in dictionaryofruns:
         for counter, timepoint in enumerate(dictionaryofruns[run]['time']):
@@ -185,8 +185,8 @@ def _calculate_indexs_from_time(dictionaryofruns, timescale):
     output[1] = maxbase
     return output
 
-def _structure_evaluation(dictionaryofruns, indexstomine,
-                                    timescale=None, cutoff=0., rescale=False):
+def _structure_evaluation(dictionaryofruns, structurewindow,
+                                    timewindow=None, cutoff=0., rescale=False):
     """
     :param dictionaryofruns: This is the standard dictionary that is output by
         Kinefold runnumber:['dotbracket', etc, etc,]:list
@@ -195,8 +195,8 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
         mine over time (1 indexed)
     :type inddexestomine: list of lists of ints
         NOTE: This is currently broken and only supports a single index
-    :param timescale: If used this outlines the timepoints of interest
-    :type timescale: list of lists of floats
+    :param timewindow: If used this outlines the timepoints of interest
+    :type timewindow: list of lists of floats
     :param cutoff: This is a way to remove not common structures - anystructure
         which doesn't appear more than the cutoff is removed from the output
     :type cutoff: float
@@ -226,7 +226,7 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
                                       dotbracket[indexs[0] - 1: indexs[1]])
                 tempdict[runnumber]['time'].append(timelist[counter])
     #print tempdict
-    timelist = _calculate_time_list(tempdict, timescale, rescale)
+    timelist = _calculate_time_list(tempdict, timewindow, rescale)
     # print timelist
     maxtime = max(timelist)
     mintime = min(timelist)
@@ -263,8 +263,6 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
                 # print timepoints
                 outdict = add_structures_to_timecountlist(
                                                 outdict, structure, timepoints)
-    #             #print outdict
-    # print outdict
     #Reduce the size of the dictionary
     #outdict = reduce_size_of_dict(outdict)
     structstoouput = []
@@ -277,13 +275,13 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
                 maxfreq = tempfreq
         if maxfreq >= cutoff:
             structstoouput.append(structure)
-    timecoursedatadict = {x:y for (x, y) in
+    timecoursedatadict = {x:np.array(y) for (x, y) in
                             outdict.items() if x in structstoouput}
     # print timecoursedatadict
     structures, stats = calculate_stats(timecoursedatadict)
     return timecoursedatadict, structures, stats
 
-def _calculate_time_list(dictofruns, timescale, rescale=False, minstep=75):
+def _calculate_time_list(dictofruns, timewindow, rescale=False, minstep=75):
     templist = [0]
     for run in dictofruns:
         templist.extend(dictofruns[run]['time'])
@@ -292,14 +290,14 @@ def _calculate_time_list(dictofruns, timescale, rescale=False, minstep=75):
     templist = list(templist)
     templist.sort()
     #print templist
-    if timescale:
-        maxtime = timescale[1]
-        mintime = timescale[0]
+    if timewindow:
+        maxtime = timewindow[1]
+        mintime = timewindow[0]
     else:
         maxtime = max(templist)
         mintime = min(templist)
     if rescale and maxtime > max(templist):
-        #asking for data outside of timescale
+        #asking for data outside of timewindow
         entry = max(templist)
         while entry < maxtime:
             entry += minstep
@@ -325,7 +323,7 @@ def calculate_stats(timecoursedictionary):
     structs = {}
     stats = {}
     for structure in timecoursedictionary:
-        timecountarray = np.array(timecoursedictionary[structure])
+        timecountarray = timecoursedictionary[structure]
         #Find the first instance of it's max
         maxindex = np.argmax(timecountarray[:, 1])
         maxfeq = timecountarray[maxindex, 1]

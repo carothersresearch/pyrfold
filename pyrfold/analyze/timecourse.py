@@ -20,9 +20,28 @@ class TimeCourseStructure:
 
     Requires an output dictionay structure that is output from hyak processing
     """
-    def __init__(self, dictionaryofruns=None, indexestomine=None, timescale=None,
-                    cutoff=0.0, rescale=False, maxlength=None):
-
+    def __init__(self, dictionaryofruns=None, structurewindow=None, timescale=None,
+                    cutoff=0.0, rescale=False, maxlength=False):
+        """
+        This function initializes the object - the only thing required for
+        this step is the dictionaryofruns
+        :param dictionaryofruns: This is the dictionary containing all of the
+            simulation imformation
+        :type dictionaryofruns: dict
+        :param structurewindow: The start and stop window that you want to look
+            at - (this is 1 indexed!)
+        :type structurewindow: list
+        :param timescale: The start and stop of the timewindow you want to
+            consider
+        :type timescale:
+        :param cutoff:
+        :type cutoff:
+        :param rescale:
+        :type rescale:
+        :param maxlength: If true the maximum length of the sequence will be
+            used as the end of the indexstomine
+        :type maxlength:
+        """
         (self.dictionary, self.baseadditiontime, self.__sequence) = \
                          self._compensate_for_intial_translation(dictionaryofruns)
         #A list of structures that have been found thus far and their max
@@ -31,44 +50,43 @@ class TimeCourseStructure:
         self.timedata = {}
         self.stats = {}
         if maxlength:
-            self.indexestomine = _calculate_indexs_from_time(
+            self.structurewindow = _calculate_indexs_from_time(
                                         self.dictionary, timescale)
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                self.indexestomine, timescale, cutoff, rescale)
+                self.structurewindow, timescale, cutoff, rescale)
             self.sequence = self.__sequence[
-                                        indexestomine[0] - 1: indexestomine[1]]
-
-        elif indexestomine:
-            if indexestomine[1] > len(self.__sequence):
-                indexestomine[1] = len(self.__sequence)
+                                        structurewindow[0] - 1: structurewindow[1]]
+        elif structurewindow:
+            if structurewindow[1] > len(self.__sequence):
+                structurewindow[1] = len(self.__sequence)
                 print 'readjusted max index'
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                indexestomine, timescale, cutoff, rescale)
+                structurewindow, timescale, cutoff, rescale)
             self.sequence = self.__sequence[
-                            self.indexestomine[0] - 1: self.indexestomine[1]]
+                            self.structurewindow[0] - 1: self.structurewindow[1]]
 
-    def generate_data(self, indexestomine=None, timescale=None, cutoff=0.0,
+    def generate_data(self, structurewindow=None, timescale=None, cutoff=0.0,
                         rescale=False, maxlength=None):
-        # if indexestomine[1] > len(self.__sequence):
-        #     indexestomine[1] = len(self.__sequence)
+        # if structurewindow[1] > len(self.__sequence):
+        #     structurewindow[1] = len(self.__sequence)
         #     print 'readjusted max index'
         if maxlength:
-            self.indexestomine = _calculate_indexs_from_time(
+            self.structurewindow = _calculate_indexs_from_time(
                                         self.dictionary, timescale)
 
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                self.indexestomine, timescale, cutoff, rescale)
+                self.structurewindow, timescale, cutoff, rescale)
             self.sequence = self.__sequence[
-                                self.indexestomine[0] - 1: self.indexestomine[1]]
+                                self.structurewindow[0] - 1: self.structurewindow[1]]
         else:
             (self.timedata, self.structures, self.stats) = \
                     _structure_evaluation(self.dictionary,
-                    indexestomine, timescale, cutoff, rescale)
+                    structurewindow, timescale, cutoff, rescale)
             self.sequence = self.__sequence[
-                                        indexestomine[0] - 1: indexestomine[1]]
+                                        structurewindow[0] - 1: structurewindow[1]]
 
     def generate_time_to_structure_dict(self):
         outdict = {}
@@ -173,7 +191,7 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
     :param dictionaryofruns: This is the standard dictionary that is output by
         Kinefold runnumber:['dotbracket', etc, etc,]:list
     :type dictionaryofruns: Dictionary
-    :param indexestomine: The start and stop positions of the dotbrackets to
+    :param structurewindow: The start and stop positions of the dotbrackets to
         mine over time (1 indexed)
     :type inddexestomine: list of lists of ints
         NOTE: This is currently broken and only supports a single index
@@ -186,7 +204,7 @@ def _structure_evaluation(dictionaryofruns, indexstomine,
     #Probably best to have this set up as a dictionary output?
     tempdict = {} #keys: structures values: [count, time]
     maxtime = 0
-    indexs = indexstomine
+    indexs = structurewindow
     #print dictionaryofruns[1]
     for runnumber in dictionaryofruns:
         #print 'run number'

@@ -152,58 +152,58 @@ class TimeCourseStructure:
         outdict['energy'] = energydict
         return outdict
 
-def _compensate_for_intial_translation(self, dictionaryofruns):
-    """Kinefold takes timepoint 0 to be the time of the first helix
-    formation. This function accounts for the intial polymerization that
-    has to occur beforehand
-     """
-    #We need to identify the polymerization rate
-    newdict = {}
-    timeofbaseaddition = None
-    for runnumber in dictionaryofruns:
-        dotbracketlist = deepcopy(dictionaryofruns[runnumber]['dotbracket'])
-        timelist = deepcopy(dictionaryofruns[runnumber]['time'])
-        if not dotbracketlist:
-            continue
-        elif len(dotbracketlist[0]) == 1:
-            continue
-        newdict[runnumber] = {}
-        #Polymerization rate
-        timeofbaseaddition = []
-        for counter, dotbracket in enumerate(dotbracketlist):
-            currentlength = len(dotbracket)
-            shift = 1
-            numberfound = 0
-            while counter-shift >= 0:
-                if len(dotbracketlist[counter - shift]) == currentlength:
-                    shift += 1
-                else:
-                    timeofbaseaddition.append(timelist[counter] - timelist[counter-shift])
-                    numberfound += 1
+    def _compensate_for_intial_translation(self, dictionaryofruns):
+        """Kinefold takes timepoint 0 to be the time of the first helix
+        formation. This function accounts for the intial polymerization that
+        has to occur beforehand
+         """
+        #We need to identify the polymerization rate
+        newdict = {}
+        timeofbaseaddition = None
+        for runnumber in dictionaryofruns:
+            dotbracketlist = deepcopy(dictionaryofruns[runnumber]['dotbracket'])
+            timelist = deepcopy(dictionaryofruns[runnumber]['time'])
+            if not dotbracketlist:
+                continue
+            elif len(dotbracketlist[0]) == 1:
+                continue
+            newdict[runnumber] = {}
+            #Polymerization rate
+            timeofbaseaddition = []
+            for counter, dotbracket in enumerate(dotbracketlist):
+                currentlength = len(dotbracket)
+                shift = 1
+                numberfound = 0
+                while counter-shift >= 0:
+                    if len(dotbracketlist[counter - shift]) == currentlength:
+                        shift += 1
+                    else:
+                        timeofbaseaddition.append(timelist[counter] - timelist[counter-shift])
+                        numberfound += 1
+                        break
+                if len(timeofbaseaddition) == 10:
+                    timeofbaseaddition = np.round(np.mean(timeofbaseaddition))
                     break
-            if len(timeofbaseaddition) == 10:
-                timeofbaseaddition = np.round(np.mean(timeofbaseaddition))
-                break
-        #Now have to add time and dotbrackets to this system
-        newtimelist = []
-        newdotbracketlist = []
-        newenegylist = []
-        for basenumber in range(len(dotbracketlist[0]) - 1):
-            newtimelist.append(timeofbaseaddition * basenumber)
-            newdotbracketlist.append('.' + '.'*basenumber)
-            newenegylist.append(0)
-        basetime = max(newtimelist) + timeofbaseaddition
-        for counter, dotbracket in enumerate(dotbracketlist):
-            newdotbracketlist.append(dotbracket)
-            newtimelist.append(basetime + timelist[counter])
-        newenegylist.extend(dictionaryofruns[runnumber]['energy'])
-        newdict[runnumber]['dotbracket'] = deepcopy(newdotbracketlist)
-        newdict[runnumber]['time'] = \
-                                np.round(np.array(deepcopy(newtimelist)))
-        newdict[runnumber]['energy'] = np.array(deepcopy(newenegylist))
-        sequence = dictionaryofruns[runnumber]['sequence']
-    #print newdict
-    return newdict, timeofbaseaddition, sequence
+            #Now have to add time and dotbrackets to this system
+            newtimelist = []
+            newdotbracketlist = []
+            newenegylist = []
+            for basenumber in range(len(dotbracketlist[0]) - 1):
+                newtimelist.append(timeofbaseaddition * basenumber)
+                newdotbracketlist.append('.' + '.'*basenumber)
+                newenegylist.append(0)
+            basetime = max(newtimelist) + timeofbaseaddition
+            for counter, dotbracket in enumerate(dotbracketlist):
+                newdotbracketlist.append(dotbracket)
+                newtimelist.append(basetime + timelist[counter])
+            newenegylist.extend(dictionaryofruns[runnumber]['energy'])
+            newdict[runnumber]['dotbracket'] = deepcopy(newdotbracketlist)
+            newdict[runnumber]['time'] = \
+                                    np.round(np.array(deepcopy(newtimelist)))
+            newdict[runnumber]['energy'] = np.array(deepcopy(newenegylist))
+            sequence = dictionaryofruns[runnumber]['sequence']
+        #print newdict
+        return newdict, timeofbaseaddition, sequence
 
 def _calculate_indexs_from_time(dictionaryofruns, timewindow):
     """ This serves to find the last possible base of the window

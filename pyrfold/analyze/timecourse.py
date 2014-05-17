@@ -55,13 +55,13 @@ class TimeCourseStructure:
         self.timedata = {}
         self.stats = {}
         if maxlength:
-            self.structurewindow = _calculate_indexs_from_time(
+            structurewindow = _calculate_indexs_from_time(
                                         self.dictionary, timewindow)
             (self.timedata, self.structures, self.stats) = \
                 _structure_evaluation(self.dictionary,
-                self.structurewindow, timewindow, cutoff, rescale)
+                structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
-                                        structurewindow[0] - 1: structurewindow[1]]
+                        structurewindow[0] - 1: structurewindow[1]]
         elif structurewindow:
             if structurewindow[1] > len(self.__sequence):
                 structurewindow[1] = len(self.__sequence)
@@ -70,13 +70,10 @@ class TimeCourseStructure:
                 _structure_evaluation(self.dictionary,
                 structurewindow, timewindow, cutoff, rescale)
             self.sequence = self.__sequence[
-                            self.structurewindow[0] - 1: self.structurewindow[1]]
+                            structurewindow[0] - 1: structurewindow[1]]
 
     def generate_data(self, structurewindow, timewindow=None, cutoff=0.0,
                         rescale=False, maxlength=None):
-        # if structurewindow[1] > len(self.__sequence):
-        #     structurewindow[1] = len(self.__sequence)
-        #     print 'readjusted max index'
         if maxlength:
             self.structurewindow = _calculate_indexs_from_time(
                                         self.dictionary, timewindow)
@@ -130,6 +127,18 @@ class TimeCourseStructure:
         dotdict = OrderedDict()
         energydict = {}
         timelist = _calculate_time_list(self.dictionary)
+        baseaddition = self.baseadditiontime
+        #Rescale all of the time vectors
+
+        #Try to account of numerical disagreement
+        #Tolerance is the cutoff change in time for investigating if sizes of
+        #The constrcuts are the same
+        # tolerance = baseaddition/5.
+        # pasttime = -50
+        # for time in timelist:
+        #     if abs(pasttime - time) < tolerance:
+        #         #Need to investigate if this additional time point is due to a single base addition
+
         #Initialize the dictionary
         for time in timelist:
             dotdict[time] = Counter()
@@ -150,6 +159,7 @@ class TimeCourseStructure:
         outdict  = {}
         outdict['dotbracket'] = dotdict
         outdict['energy'] = energydict
+        outdict['sequence'] = self.__sequence
         return outdict
 
     def _compensate_for_intial_translation(self, dictionaryofruns):
@@ -159,31 +169,34 @@ class TimeCourseStructure:
          """
         #We need to identify the polymerization rate
         newdict = {}
-        timeofbaseaddition = None
+        timeofbaseaddition = []
+        #Polymerization rate
+        for runnumber in dictionaryofruns:
+            tempbaseadditionlist = []
+            dotbracketlist = dictionaryofruns[runnumber]['dotbracket']
+            timelist = dictionaryofruns[runnumber]['time']
+            for counter, dotbracket in enumerate(dotbracketlist):
+                currentlength = len(dotbracket)
+                shift = 1
+                while counter-shift >= 0:
+                    if len(dotbracketlist[counter - shift]) == currentlength:
+                        shift += 1
+                    else:
+                        tempbaseadditionlist.append(timelist[counter] - timelist[counter-shift])
+                        break
+                if len(timeofbaseaddition) == 8:
+                    timeofbaseaddition.append(tempbaseadditionlist)
+                    break
+        timeofbaseaddition = np.round(np.mean(tempbaseadditionlist), 2)
         for runnumber in dictionaryofruns:
             dotbracketlist = deepcopy(dictionaryofruns[runnumber]['dotbracket'])
             timelist = deepcopy(dictionaryofruns[runnumber]['time'])
             if not dotbracketlist:
                 continue
             elif len(dotbracketlist[0]) == 1:
+                sequence = dictionaryofruns[runnumber]['sequence']
                 continue
             newdict[runnumber] = {}
-            #Polymerization rate
-            timeofbaseaddition = []
-            for counter, dotbracket in enumerate(dotbracketlist):
-                currentlength = len(dotbracket)
-                shift = 1
-                numberfound = 0
-                while counter-shift >= 0:
-                    if len(dotbracketlist[counter - shift]) == currentlength:
-                        shift += 1
-                    else:
-                        timeofbaseaddition.append(timelist[counter] - timelist[counter-shift])
-                        numberfound += 1
-                        break
-                if len(timeofbaseaddition) == 10:
-                    timeofbaseaddition = np.round(np.mean(timeofbaseaddition))
-                    break
             #Now have to add time and dotbrackets to this system
             newtimelist = []
             newdotbracketlist = []
@@ -199,10 +212,13 @@ class TimeCourseStructure:
             newenegylist.extend(dictionaryofruns[runnumber]['energy'])
             newdict[runnumber]['dotbracket'] = deepcopy(newdotbracketlist)
             newdict[runnumber]['time'] = \
-                                    np.round(np.array(deepcopy(newtimelist)))
+                                    np.round(np.array(deepcopy(newtimelist)), 3)
             newdict[runnumber]['energy'] = np.array(deepcopy(newenegylist))
+            newdict[runnumber]['sequence'] = dictionaryofruns
             sequence = dictionaryofruns[runnumber]['sequence']
         #print newdict
+        if not newdict:
+            newdict = dictionaryofruns
         return newdict, timeofbaseaddition, sequence
 
 def _calculate_indexs_from_time(dictionaryofruns, timewindow):
@@ -327,7 +343,7 @@ def _structure_evaluation(dictionaryofruns, structurewindow,
     timecoursedatadict = {x:np.array(y) for (x, y) in
                             outdict.items() if x in structstoouput}
     # print timecoursedatadict
-    structures, stats = calculate_stats(timecoursedatadict)
+    structures, stats, timecoursedatadict = calculate_stats(timecoursedatadict)
     return timecoursedatadict, structures, stats
 
 def _calculate_time_list(dictofruns, timewindow=None, rescale=False,
@@ -389,7 +405,15 @@ def calculate_stats(timecoursedictionary):
         maxcountvalues = timecountarray[:, 1][indexofmaxes]
         timeofvalues = timecountarray[:, 0][indexofmaxes]
         stats[structure] = [timeoffirst, maxcountvalues, timeofvalues]
-    return structs, stats
+        #sorttime dict by time of first appearance
+        structkeys = stats.keys()
+        sortlist = zip([stats[struct][0] for struct in structkeys], structkeys)
+        sortlist.sort()
+        outtimedict = OrderedDict()
+        for time, struct in sortlist:
+            outtimedict[struct] = timecoursedictionary[struct]
+
+    return structs, stats, outtimedict
 
 def reduce_size_of_dict(timecoursedictionary):
     """

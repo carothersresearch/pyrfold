@@ -79,10 +79,7 @@ def timecourse(rawoutputfolder, processeddirectory,
             tempdictionary = {}
             tempdictionary['time'] = []
             tempdictionary['dotbracket'] = []
-            # tempdictionary['kine'] = []
             sequencelist = []
-            # tempdictionary['base count'] = []
-            # tempdictionary['kine helix'] = []
             tempdictionary['energy'] = []
             with open(rnmfile, 'r') as rnmopenfile:
                 for i, line in enumerate(rnmopenfile):
@@ -96,15 +93,15 @@ def timecourse(rawoutputfolder, processeddirectory,
                         tempdictionary['time'].append(kineobj.time)
                         tempdictionary['dotbracket'].append(
                             kineobj.dotbracket)
-                        # tempdictionary['kine'].append(kineobj.structure)
-                        # tempdictionary['base count'].append(
-                        #     kineobj.basenumber)
                         sequencelist.append(kineobj.sequence)
-                        # tempdictionary['kine helix'].append(kineobj.helix)
                         tempdictionary['energy'].append(kineobj.freeenergy)
                         tempdictionary['type'] = kineobj.type
                         tempdictionary['total bases'] = kineobj.basetotal
-            tempdictionary['sequence'] = sequencelist[-1]
+            try:
+                tempdictionary['sequence'] = sequencelist[-1]
+            except KeyError:
+                print rnmfile
+                print 'KeyError'
             dicttopickle[rnmnumber] = tempdictionary
         #Now to write the output for a single experiment
         temppickledest = os.path.join(outputfilename, directoryname + '.p')

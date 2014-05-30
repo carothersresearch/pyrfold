@@ -58,7 +58,7 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
     #Write the submission summary file:
     write_sub_summary(directorypath, devicenametosubobj)
     #Need a sophisicated function to determine where jobs go
-    nodestodevices = calculate_number_of_nodes(devicenametosubobj, nodes)
+    nodestodevices = nodes_to_devivces(devicenametosubobj, nodes)
     #write all of the dat files (sequence files)
     for node in nodestodevices:
         tempnodename = 'node-' + str(node)
@@ -181,10 +181,13 @@ def write_dat_files(datdirectory, listofdevices, devicenametosubobj):
             seq = dna_to_rna(seq)
             f.write(seq + '\n')
 
-def calculate_number_of_nodes(devicenametosubobj, nodes):
+def nodes_to_devivces(devicenametosubobj, nodes):
     """Since the number of simulations done for every device is dicated now
     in the spreadsheet we have to come up with a clever way of spreading out
-    the jobs"""
+    the jobs
+
+    TODO: Make sure that this is correct
+    """
     outdict = {}
     #calculate the total number of jobs
     numberofjobs = 0
@@ -206,8 +209,8 @@ def calculate_number_of_nodes(devicenametosubobj, nodes):
             countforasinglenode = 0
             node += 1
             #this is a sloppy way to make sure we don't intoduce to many nodes
-            if node > nodes:
-                node = nodes
+            # if node > nodes:
+            #     node = nodes
     return outdict
 
 def mybundle_sub(directorypath, email, cores, nodes, walltime,

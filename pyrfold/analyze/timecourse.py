@@ -23,7 +23,7 @@ class TimeCourseStructure(object):
 
     Requires an output dictionay structure that is output from hyak processing
     """
-    def __init__(self, dictionaryofruns, structurewindow=None, timewindow=None,
+    def __init__(self, compresseddict, structurewindow=None, timewindow=None,
               rescale=False, firstexposure=False, maxlength=False, cutoff=0.0):
         """
         This function initializes the object - the only thing required for
@@ -48,23 +48,56 @@ class TimeCourseStructure(object):
             used as the end of the indexstomine
         :type maxlength: boolean
         """
-        temprundict, self.baseadditiontime, self.completesequence = \
-                                   consolidate_run_dictionary(dictionaryofruns)
-        #This step is time intensive and needs to be optimized
-        self.dictionary = compress_run_dictionary(temprundict,
-                                  self.baseadditiontime, self.completesequence)
-        #A list of structures that have been found thus far and their max
-        #frequency
         self.structures = {}
         self.structuredataframe = None
         self.stats = {}
         self.timewindow = timewindow
         self.structurewindow = structurewindow
-        self.sequence = self.completesequence
+        #self.sequence = self.completesequence
+        self.dictionary = compresseddict
+        self.completesequence = compresseddict['sequence']
 
         if structurewindow or (timewindow and maxlength):
             self.generate_data(structurewindow, timewindow, cutoff, rescale,
                                                     maxlength, firstexposure)
+
+    @classmethod
+    def init_from_dictofruns(cls, dictionaryofruns, structurewindow=None, timewindow=None,
+              rescale=False, firstexposure=False, maxlength=False, cutoff=0.0):
+        """
+        This function initializes the object - the only thing required for
+        this step is the dictionaryofruns
+        :param dictionaryofruns: This is the dictionary containing all of the
+            simulation imformation
+        :type dictionaryofruns: dict
+        :param structurewindow: The start and stop window that you want to look
+            at - (this is 1 indexed!)
+        :type structurewindow: list
+        :param timewindow: The start and stop of the timewindow you want to
+            consider
+        :type timewindow: list
+        :param cutoff: The smallest observed max frequency of structure to
+            consider. This is great for reducing the size of things that you
+            produce
+        :type cutoff: float
+        :param rescale: This will extend the max time of a simulation if True.
+            this is important for considering a diverse set of simulations
+        :type rescale: boolean
+        :param maxlength: If true the maximum length of the sequence will be
+            used as the end of the indexstomine
+        :type maxlength: boolean
+        """
+        temprundict, baseadditiontime, completesequence = \
+                                   consolidate_run_dictionary(dictionaryofruns)
+        #This step is time intensive and needs to be optimized
+        dictionary = compress_run_dictionary(temprundict,
+                                  baseadditiontime, completesequence)
+        #A list of structures that have been found thus far and their max
+        #frequency
+        output = cls(dictionary, structurewindow, timewindow, rescale,
+                                        firstexposure, maxlength, cutoff)
+        return output
+
 
     def generate_data(self, structurewindow, timewindow=None, cutoff=0.0,
                         rescale=False, maxlength=None, firstexposure=False):
@@ -79,18 +112,6 @@ class TimeCourseStructure(object):
                                self.timewindow, cutoff, rescale, firstexposure)
         self.sequence = self.completesequence[
                       self.structurewindow[0] - 1: self.structurewindow[1]]
-
-    def generate_time_to_structure_dict(self):
-        outdict = {}
-        for structure in self.timedata:
-            for timefreq in self.timedata[structure]:
-                if timefreq[0] in outdict:
-                    outdict[timefreq[0]][structure] = timefreq[1]
-                else:
-                    outdict[timefreq[0]] = {}
-                    outdict[timefreq[0]][structure] = timefreq[1]
-        self.timetostructures = outdict
-        #return outdict
 
     def __repr__(self):
         #Crude Sorting system
@@ -715,6 +736,17 @@ def dna_to_rna(seq):
 ###############################################################################
 #                               DEPRECIATED
 ###############################################################################
+    # def generate_time_to_structure_dict(self):
+    #     outdict = {}
+    #     for structure in self.timedata:
+    #         for timefreq in self.timedata[structure]:
+    #             if timefreq[0] in outdict:
+    #                 outdict[timefreq[0]][structure] = timefreq[1]
+    #             else:
+    #                 outdict[timefreq[0]] = {}
+    #                 outdict[timefreq[0]][structure] = timefreq[1]
+    #     self.timetostructures = outdict
+    #     #return outdict
 # def _compensate_for_intial_translation(self, dictionaryofruns):
 #     """Kinefold takes timepoint 0 to be the time of the first helix
 #     formation. This function accounts for the intial polymerization that

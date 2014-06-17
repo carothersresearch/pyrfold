@@ -39,7 +39,12 @@ import pyrfold.hyak.submission as sub
 
 NAMEOFDIRECTORYLIST = []
 EMAIL = ''
-finalstructure = 1
+FINALSTRUCTURE = 1
+
+### COMPRESSION stuff ###
+# ENTER 1 or 0 (yes or no)
+COMPRESSOUTPUT = 1
+COMPRESSPROCESSEDOUTPUT = 1
 
 ####################  FILL IN ##########################################
 ########################################################################
@@ -84,7 +89,7 @@ for directoryname in NAMEOFDIRECTORYLIST:
                     txtfile.write('timecourse')
                     txtfile.write('\n')
                     #Final Structure
-                    txtfile.write(str(finalstructure))
+                    txtfile.write(str(FINALSTRUCTURE))
                     txtfile.write('\n')
                     #Single directory(as opposed to all output)
                     txtfile.write('1')
@@ -99,14 +104,32 @@ for directoryname in NAMEOFDIRECTORYLIST:
                     txtfile.write(os.path.join(EXPPATH, 'sub_summary.p'))
                     txtfile.write('\n')
 
+if COMPRESSOUTPUT:
+    with open(os.path.join(PATHTOPARMS, 'finaljob-compression-out' + '.txt'), 'wb') as txtfile:
+        txtfile.write('compression')
+        txtfile.write('\n')
+        #path to standard output
+        txtfile.write(os.path.join(EXPPATH, 'output'))
+        txtfile.write('\n')
+
+if COMPRESSPROCESSEDOUTPUT:
+    for path in ['timecourse', 'compressedtime', 'finalstructure']:
+        with open(os.path.join(PATHTOPARMS, 'finaljob-compression-' + path + '.txt'), 'wb') as txtfile:
+            txtfile.write('compression')
+            txtfile.write('\n')
+            #path to standard output
+            txtfile.write(os.path.join(EXPPATH, 'proc_output', path))
+            txtfile.write('\n')
+
 CALLCOMMAND = 'python ' + os.path.join(ROOT, PROCESSINGSCRIPTNAME)
 #os.chdir(NAMEOFPROCESSINGFOLDER)
-pathtoframework = os.path.join(ROOT, NAMEOFPROCESSINGFOLDER)
-hyakcreate.mybundle_sub(pathtoframework, EMAIL, NUMBEROFCORES, 1,
-                                 '15:00:00', 'highthroughputproc')
-hyakcreate.general_myscript_sub(pathtoframework, CALLCOMMAND)
-hyakcreate.symlinks(os.path.join(pathtoframework, 'MyScript.sh'), os.path.join(pathtoframework,'myscript-parms'),
-                 os.path.join(pathtoframework,'myscript-links'), '*.txt')
+PATHTOFRAMEWORK = os.path.join(ROOT, NAMEOFPROCESSINGFOLDER)
+hyakcreate.mybundle_sub(PATHTOFRAMEWORK, EMAIL, NUMBEROFCORES, 1,
+                        '15:00:00', 'highthroughputproc', finaljob=True)
+hyakcreate.general_myscript_sub(PATHTOFRAMEWORK, CALLCOMMAND)
+hyakcreate.symlinks(os.path.join(PATHTOFRAMEWORK, 'MyScript.sh'),
+                    os.path.join(PATHTOFRAMEWORK,'myscript-parms'),
+                    os.path.join(PATHTOFRAMEWORK,'myscript-links'), '*.txt')
 
 #Submit the file
-sub.submit_basic_hyak_framework(os.path.join(pathtoframework,'myscript-links'))
+sub.submit_basic_hyak_framework(os.path.join(PATHTOFRAMEWORK, 'myscript-links'))

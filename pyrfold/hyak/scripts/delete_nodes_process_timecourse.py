@@ -34,10 +34,13 @@ if PROCESSINGTYPE == 'timecourse':
     FOLDERTOPROCESS = INPUTFILE.next().strip()
     PROCESSEDDIRECTORY = INPUTFILE.next().strip()
     NAMEOFFOLDERTOPROCESS = os.path.basename(FOLDERTOPROCESS)
+    ##Get the reference files
+    SUBSUMMARYFILE = INPUTFILE.next().strip()
+    SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
     #Do processing specific based on the single or multiple directory thing
     if SINGLEDIRECTORY:
         #create the timecourse files
-        hyakp.timecourse(FOLDERTOPROCESS, PROCESSEDDIRECTORY,
+        hyakp.timecourse(FOLDERTOPROCESS, PROCESSEDDIRECTORY, SUBSUMMARYDATA,
             singledirectory=True)
         #remove unwanted files
         hyakp.clean_up_output_data(FOLDERTOPROCESS, singlefile=True)
@@ -48,9 +51,6 @@ if PROCESSINGTYPE == 'timecourse':
         hyakp.clean_up_output_data(FOLDERTOPROCESS)
     if FINALSTRUCTURES:
         #Consolidate the data into a final structure file
-        ##Get the reference files
-        SUBSUMMARYFILE = INPUTFILE.next().strip()
-        SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
         ##process to single files
         NAMEOFFOLDER = os.path.basename(FOLDERTOPROCESS)
         if SINGLEDIRECTORY:
@@ -59,6 +59,12 @@ if PROCESSINGTYPE == 'timecourse':
         else:
             #NEED TO BUILD
             pass
+
+if PROCESSINGTYPE == 'compression':
+    #Gather the additional information
+    DIRECTORYTOPROCESS = INPUTFILE.next().strip()
+    hyakp.compress_and_delete_directory(DIRECTORYTOPROCESS)
+
 if PROCESSINGTYPE == 'additionalround':
     #This will be linked to a job file that is submitted after
     #all other files have been submitted

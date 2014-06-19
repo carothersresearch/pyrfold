@@ -56,7 +56,6 @@ class TimeCourseStructure(object):
         #self.sequence = self.completesequence
         self.dictionary = compresseddict
         self.completesequence = compresseddict['sequence']
-
         if structurewindow or (timewindow and maxlength):
             self.generate_data(structurewindow, timewindow, cutoff, rescale,
                                                     maxlength, firstexposure)
@@ -87,10 +86,12 @@ class TimeCourseStructure(object):
             used as the end of the indexstomine
         :type maxlength: boolean
         """
+        from ..hyak import process as hyakp
+
         temprundict, baseadditiontime, completesequence = \
-                                   consolidate_run_dictionary(dictionaryofruns)
+                            hyakp.consolidate_run_dictionary(dictionaryofruns)
         #This step is time intensive and needs to be optimized
-        dictionary = compress_run_dictionary(temprundict,
+        dictionary = hyakp.compress_run_dictionary(temprundict,
                                   baseadditiontime, completesequence)
         #A list of structures that have been found thus far and their max
         #frequency
@@ -184,7 +185,7 @@ class TimeCourseStructure(object):
         :param structurelist: list of all of the structures to be considered
         :type structurelist: list of str
         :return: returns popt and pcov
-        popt = [shift, , maxvalue, frequency]
+        popt = [maxvalue, rate]
         pcov an array of the variance of these values
         """
         #First consolidate all of the structures
@@ -472,7 +473,7 @@ def calculate_time_list(dictofruns, baseaddition, minstep=25):
 def rate_of_folding_func(t, maxvalue, rate):
     return maxvalue*(1 - np.exp(-rate*(t)))
 
-def caluate_time_vector_for_structures(compresseddict, timewindow,
+def calcuate_time_vector_for_structures(compresseddict, timewindow,
                    firstexposure = False, windowstartstop = None):
     mintime, maxtime = timewindow
     if windowstartstop:
@@ -481,18 +482,18 @@ def caluate_time_vector_for_structures(compresseddict, timewindow,
     stopindex = None
     timelist = compresseddict['dotbracket'].keys()
     for index, timepoint in enumerate(timelist):
-        if ((not startindex) and timepoint >= mintime):
-            if not firstexposure:
+        if firstexposure and startindex is None:
+            size = len(compresseddict['dotbracket'][timepoint].most_common(1)[0][0])
+            if size == lengthofsequence:
                 startindex = index
-            elif len(compresseddict['dotbracket'][timepoint].most_common(1)[0][0]) == lengthofsequence:
-                startindex = index
-        elif ((not stopindex) and timepoint >= maxtime):
+        elif startindex is None and timepoint >= mintime:
+            startindex = index
+        elif stopindex is None and timepoint >= maxtime:
             stopindex = index
             break
     if not stopindex:
         stopindex = len(timelist) - 1
     return timelist[startindex : stopindex + 1]
-
 
 def calculate_indexs_from_time(dictionaryofruns, timewindow):
     """ This serves to find the last possible base of the window
@@ -532,7 +533,7 @@ def structure_evaluation(dictionaryofruns, structurewindow, timewindow=None,
         mintime = 0
         #Grab the max time of the run
         maxtime = dictionaryofruns['dotbracket'].keys()[-1]
-    timevector = caluate_time_vector_for_structures(dictionaryofruns, [mintime, maxtime], firstexposure, structurewindow)
+    timevector = calcuate_time_vector_for_structures(dictionaryofruns, [mintime, maxtime], firstexposure, structurewindow)
     #Now create structure dicitonary and populate it
     structuredataframe = pandas.DataFrame(timevector, columns=['time'])
     structuredataframe = structuredataframe.set_index('time')

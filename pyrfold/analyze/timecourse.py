@@ -56,7 +56,6 @@ class TimeCourseStructure(object):
         #self.sequence = self.completesequence
         self.dictionary = compresseddict
         self.completesequence = compresseddict['sequence']
-
         if structurewindow or (timewindow and maxlength):
             self.generate_data(structurewindow, timewindow, cutoff, rescale,
                                                     maxlength, firstexposure)
@@ -87,10 +86,12 @@ class TimeCourseStructure(object):
             used as the end of the indexstomine
         :type maxlength: boolean
         """
+        from ..hyak import process as hyakp
+
         temprundict, baseadditiontime, completesequence = \
-                                   consolidate_run_dictionary(dictionaryofruns)
+                            hyakp.consolidate_run_dictionary(dictionaryofruns)
         #This step is time intensive and needs to be optimized
-        dictionary = compress_run_dictionary(temprundict,
+        dictionary = hyakp.compress_run_dictionary(temprundict,
                                   baseadditiontime, completesequence)
         #A list of structures that have been found thus far and their max
         #frequency
@@ -134,34 +135,6 @@ class TimeCourseStructure(object):
             output += linetoprint
         return output
 
-    # def generate_compressed_dictionary(self):
-    #     dotdict = OrderedDict()
-    #     energydict = {}
-    #     timelist = _calculate_time_list(self.dictionary)
-    #     baseaddition = self.baseadditiontime
-    #     #Initialize the dictionary
-    #     for time in timelist:
-    #         dotdict[time] = Counter()
-    #     maxtime = max(timelist)
-    #     for runnumber in self.dictionary:
-    #         totalnumber = len(self.dictionary[runnumber]['time'])
-    #         for counter, time in enumerate(self.dictionary[runnumber]['time']):
-    #             structure = self.dictionary[runnumber]['dotbracket'][counter]
-    #             currenttime = time
-    #             energy = self.dictionary[runnumber]['energy'][counter]
-    #             if counter < totalnumber - 1:
-    #                 nexttime = self.dictionary[runnumber]['time'][counter + 1]
-    #             else:
-    #                 nextime = maxtime + 1
-    #             dotdict = _add_structure_timedictionary(dotdict, structure,
-    #                             [currenttime, nexttime])
-    #             energydict = _add_energy_data(energydict, structure, energy)
-    #     outdict  = {}
-    #     outdict['dotbracket'] = dotdict
-    #     outdict['energy'] = energydict
-    #     outdict['sequence'] = self.completesequence
-    #     return outdict
-
     def find_sequence_index(self, sequence):
         """this function will look through the parts and identify the start
         and stop location of the part if it exists in the part
@@ -184,7 +157,7 @@ class TimeCourseStructure(object):
         :param structurelist: list of all of the structures to be considered
         :type structurelist: list of str
         :return: returns popt and pcov
-        popt = [shift, , maxvalue, frequency]
+        popt = [maxvalue, rate]
         pcov an array of the variance of these values
         """
         #First consolidate all of the structures
@@ -204,275 +177,10 @@ class TimeCourseStructure(object):
                                # temptime, freq)
         return popt, pcov
 
-    # def calculate_folding_rate(self, structurelist):
-    #     """This function will fit an exponential function to fit folding data
-    #     with the goal of finding a rate of folding a max value of folding
-    #     sum the contribution of multiple parts for this folding rate
-    #     :param structurelist: list of all of the structures to be considered
-    #     :type structurelist: list of str
-    #     :return: returns popt and pcov
-    #     popt = [shift, , maxvalue, frequency]
-    #     pcov an array of the variance of these values
-    #     """
-    #     #First consolidate all of the structures
-    #     for structure in structurelist:
-    #         temptime = self.timedata[structure][1:,0]
-    #         try:
-    #             freq += self.timedata[structure][1:,1]
-    #         except NameError:
-    #             freq = self.timedata[structure][1:,1]
-    #     shift = self.baseadditiontime * self.structurewindow[1]
-
-    #     popt, pcov = curve_fit(
-    #                            lambda t, maxvalue, rate: rate_of_folding_func(
-    #                                                  t, shift, maxvalue, rate),
-    #                            temptime, freq)
-    #     return popt, pcov, shift, freq, temptime
-
-
-###############################################################################
-###############################################################################
-# CONSOLIDATE RUN DICTIONARY BLOCK START
-###############################################################################
-###############################################################################
-def consolidate_run_dictionary(rundictionary):
-    """ This function will distill a run dictionary into a very basic dictionary
-    which will be a single set of time points to all of the structures that
-    are observed at various times
-    :param rundictionary: Dictionary that hyak processing produces
-    """
-    #First calcualte the pol rate and base timeline
-    timebofbaseadition, timeline, sequence = calculate_pol_rate(rundictionary)
-    #Rescale all of the time vectors in the rundictionary to align with timelin
-    rundictionary = rescale_time_vectors(rundictionary, timeline)
-    #Do a final polishing step to make sure that there are not duplicate time points
-    #we do this because we want all of the structural shifts to be discrete
-    rundictionary = change_duplicate_time_points(rundictionary)
-    return rundictionary, timebofbaseadition, sequence
-
-def change_duplicate_time_points(dictionaryofruns):
-    """This will scan through all of the runs and add a small
-    amount of time to timepoints which are reported as being
-    identical"""
-    for runnumber in dictionaryofruns:
-        timelist = dictionaryofruns[runnumber]['time']
-        previoustime = 0
-        for index, time in enumerate(timelist):
-            currenttime = time
-            if previoustime == currenttime:
-                #need to shift current time up
-                timelist[index] += 0.001
-            previoustime = currenttime
-        #ictionaryofruns[runnumber]['time'] = timelist
-    return dictionaryofruns
-
-def calculate_pol_rate(dictionaryofruns):
-    """ function scans through run dictionary to calcuate pol rate if this
-    value wasn't previously provided
-    """
-    timeofbaseaddition = []
-        #Polymerization rate
-    for runnumber in dictionaryofruns:
-        tempbaseadditionlist = []
-        dotbracketlist = dictionaryofruns[runnumber]['dotbracket']
-        timelist = dictionaryofruns[runnumber]['time']
-        if dictionaryofruns[runnumber]['sequence']:
-            sequence = dictionaryofruns[runnumber]['sequence']
-        for counter, dotbracket in enumerate(dotbracketlist):
-            currentlength = len(dotbracket)
-            shift = 1
-            while counter-shift >= 0:
-                if len(dotbracketlist[counter - shift]) == currentlength:
-                    shift += 1
-                else:
-                    tempbaseadditionlist.append(timelist[counter] - timelist[counter-shift])
-                    break
-            if len(timeofbaseaddition) == 8:
-                timeofbaseaddition.append(tempbaseadditionlist)
-                break
-    timeofbaseaddition = np.round(np.mean(tempbaseadditionlist), 2)
-    #Make the timeline
-    timeline = []
-    for basecount in range(len(sequence)):
-        timeline.append(basecount * timeofbaseaddition)
-    return timeofbaseaddition, timeline, sequence
-
-def rescale_time_vectors(dictionaryofruns, timeline):
-    """This function needs to rescale all time vectors to align with the
-    new timeline that was generated
-    """
-    #Cycle through all of the time vectors
-    for runnumber in dictionaryofruns:
-        timelist = dictionaryofruns[runnumber]['time']
-        dotbracketlist = dictionaryofruns[runnumber]['dotbracket']
-        dictionaryofruns[runnumber]['time'] = rescale_time_vector(
-                                        timelist, dotbracketlist, timeline)
-        #length of the sequence at first base addition
-    return dictionaryofruns
-
-def rescale_time_vector(timelist, dotbracketlist, timeline):
-    totalsize = len(timelist)
-    presize = 0
-    for count, dotbracket in enumerate(dotbracketlist):
-        cursize = len(dotbracket)
-        #Second condition accounts for first pass
-        if cursize > presize:
-            if presize == 0:
-                presize = cursize
-                countstart = count
-                continue
-            #update presize
-            adjust_time_window(timelist, countstart, count, presize, timeline)
-            presize = cursize
-            countstart = count
-        #check to see if there are any more addition steps
-        elif cursize > totalsize:
-            timelist[count] += timeline[-1]
-    return timelist
-
-def adjust_time_window(timelist, indexstart, indexstop, size, timeline):
-    basetime = timeline[size - 1]
-    #If there is only one step between no interpoliation is neccesary
-    if indexstart + 1 == indexstop:
-        timelist[indexstart] = basetime
-        return timelist
-    ortinalstarttime = timelist[indexstart]
-    orginalstoptime = timelist[indexstop]
-    timelist[indexstart] = basetime
-    newstart = timeline[size -1]
-    newstop = timeline[size]
-    for index in range(indexstart + 1, indexstop):
-        timelist[index] = adjust_time_point(timelist[index], ortinalstarttime, orginalstoptime, newstart, newstop)
-
-def adjust_time_point(orginaltime, orgstart, orgstop, newstart, newstop):
-    """simple lever arm method to determine the new value of the time point
-    """
-    a = (orginaltime - orgstart)
-    b = (orgstop - orgstart)
-    value = a/b*(newstop - newstart) + newstart
-    return value
-
-###############################################################################
-###############################################################################
-# CONSOLIDATE RUN DICTIONARY BLOCK STOP
-###############################################################################
-###############################################################################
-
-
-###############################################################################
-###############################################################################
-# COMPRESS RUN DICTIONARY BLOCK START
-###############################################################################
-###############################################################################
-def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
-    dotdict = OrderedDict()
-    energydict = {}
-    timelist = calculate_time_list(rundictionary, baseadditiontime)
-    #Initialize the dictionary
-    for time in timelist:
-        dotdict[time] = Counter()
-    maxtime = max(timelist)
-    for runnumber in rundictionary:
-        #print runnumber
-        temptimelist = rundictionary[runnumber]['time']
-        totalnumber = len(temptimelist)
-        #add unstructured sequences structures where appropriate
-        mintime = temptimelist[0]
-        numberofsinglebasestoadd = int(mintime/baseadditiontime)
-        previousbasecountindex = 0
-        for basecount in range(numberofsinglebasestoadd):
-            temptime = basecount * baseadditiontime
-            structure = '.'*(basecount + 1)
-            dotdict, previousbasecountindex = add_structure_timedictionary(dotdict, structure,
-                        [temptime, temptime + baseadditiontime], previousbasecountindex)
-            add_energy_data(energydict, structure, energy=0)
-        #print 'initial stuff added'
-        #add all of the other structures
-        for counter, time in enumerate(temptimelist):
-            structure = rundictionary[runnumber]['dotbracket'][counter]
-            currenttime = time
-            energy = rundictionary[runnumber]['energy'][counter]
-            if counter < totalnumber - 1:
-                nexttime = temptimelist[counter + 1]
-            else:
-                nexttime = maxtime + 1
-            dotdict, previousbasecountindex  = add_structure_timedictionary(dotdict, structure,
-                            [currenttime, nexttime], previousbasecountindex)
-            energydict = add_energy_data(energydict, structure, energy)
-    outdict  = {}
-    dotdict = normailize_orderddict_counters(dotdict)
-    outdict['dotbracket'] = dotdict
-    outdict['energy'] = energydict
-    outdict['sequence'] = completesequence
-    return outdict
-
-def normailize_orderddict_counters(ordereddict):
-    """adding hacky removal of not used bases"""
-    for time in ordereddict:
-        if not ordereddict[time]:
-            print time
-        tempcount = sum(ordereddict[time].values())
-        for item in ordereddict[time]:
-            ordereddict[time][item] /= float(tempcount)
-    return ordereddict
-
-def add_structure_timedictionary(ordereddict, structure, times, previousstart):
-    """Previous start is to increase the efficency of this process"""
-    timelist = ordereddict.keys()
-    for index, time in enumerate(timelist[previousstart:]):
-        if time >= times[0]:
-            if time >= times[1]:
-                break
-            try:
-                ordereddict[time][structure] += 1
-            except KeyError:
-                ordereddict[time][structure] = 1
-    previousstart += index - 1
-    return ordereddict, previousstart
-
-def add_energy_data(energydict, structure, energy):
-    if structure not in energydict:
-        energydict[structure] = energy
-    return energydict
-
-def calculate_time_list(dictofruns, baseaddition, minstep=25):
-    templist = []
-    for run in dictofruns:
-        templist.extend(dictofruns[run]['time'])
-        #print dictofruns[run]['time']
-    templist = set(templist)
-    templist = list(templist)
-    templist.sort()
-    #print templist
-    maxtime = max(templist)
-    mintime = min(templist)
-    #Add timesteps for initial bass addition
-    timepointstoadd = np.arange(0, mintime, baseaddition)
-    outlist = list(timepointstoadd)
-    previousstep = 0
-    for time in templist:
-        # if time > previousstep + minstep:
-        #     #print 'this happened'
-        #     while time > previousstep + minstep:
-        #         previousstep += minstep
-        #         outlist.append(previousstep)
-        #     outlist.append(time)
-        #     previousstep = time
-        if time > previousstep:
-            #outlist.append(time - 0.005)
-            outlist.append(time)
-            previousstep = time
-    return np.array(outlist)
-
-###############################################################################
-###############################################################################
-# COMPRESS RUN DICTIONARY BLOCK stop
-###############################################################################
-###############################################################################
 def rate_of_folding_func(t, maxvalue, rate):
     return maxvalue*(1 - np.exp(-rate*(t)))
 
-def caluate_time_vector_for_structures(compresseddict, timewindow,
+def calcuate_time_vector_for_structures(compresseddict, timewindow,
                    firstexposure = False, windowstartstop = None):
     mintime, maxtime = timewindow
     if windowstartstop:
@@ -481,18 +189,18 @@ def caluate_time_vector_for_structures(compresseddict, timewindow,
     stopindex = None
     timelist = compresseddict['dotbracket'].keys()
     for index, timepoint in enumerate(timelist):
-        if ((not startindex) and timepoint >= mintime):
-            if not firstexposure:
+        if firstexposure and startindex is None:
+            size = len(compresseddict['dotbracket'][timepoint].most_common(1)[0][0])
+            if size == lengthofsequence:
                 startindex = index
-            elif len(compresseddict['dotbracket'][timepoint].most_common(1)[0][0]) == lengthofsequence:
-                startindex = index
-        elif ((not stopindex) and timepoint >= maxtime):
+        elif startindex is None and timepoint >= mintime:
+            startindex = index
+        elif stopindex is None and timepoint >= maxtime:
             stopindex = index
             break
     if not stopindex:
         stopindex = len(timelist) - 1
     return timelist[startindex : stopindex + 1]
-
 
 def calculate_indexs_from_time(dictionaryofruns, timewindow):
     """ This serves to find the last possible base of the window
@@ -532,7 +240,7 @@ def structure_evaluation(dictionaryofruns, structurewindow, timewindow=None,
         mintime = 0
         #Grab the max time of the run
         maxtime = dictionaryofruns['dotbracket'].keys()[-1]
-    timevector = caluate_time_vector_for_structures(dictionaryofruns, [mintime, maxtime], firstexposure, structurewindow)
+    timevector = calcuate_time_vector_for_structures(dictionaryofruns, [mintime, maxtime], firstexposure, structurewindow)
     #Now create structure dicitonary and populate it
     structuredataframe = pandas.DataFrame(timevector, columns=['time'])
     structuredataframe = structuredataframe.set_index('time')

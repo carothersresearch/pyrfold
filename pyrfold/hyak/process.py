@@ -302,11 +302,12 @@ def rescale_time_vectors(dictionaryofruns, timeline):
     return dictionaryofruns
 
 def rescale_time_vector(timelist, dotbracketlist, timeline):
-    totalsize = len(timelist)
+    totalsize = len(timeline)
+    sizeoftimelist = len(timelist)
+    countstart = 0
     presize = 0
     for count, dotbracket in enumerate(dotbracketlist):
         cursize = len(dotbracket)
-        #Second condition accounts for first pass
         if cursize > presize:
             if presize == 0:
                 presize = cursize
@@ -317,8 +318,14 @@ def rescale_time_vector(timelist, dotbracketlist, timeline):
             presize = cursize
             countstart = count
         #check to see if there are any more addition steps
-        elif cursize > totalsize:
-            timelist[count] += timeline[-1]
+        elif presize == totalsize:
+
+            diff_last_add = timeline[-1] - timelist[count - 1]
+            timelist[count - 1] = timeline[-1]
+            for new_count in range(count, sizeoftimelist):
+                timelist[new_count] += diff_last_add
+            break
+    timelist = np.around(timelist, decimals=1)
     return timelist
 
 def adjust_time_window(timelist, indexstart, indexstop, size, timeline):

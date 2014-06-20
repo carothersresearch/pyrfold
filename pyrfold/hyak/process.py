@@ -231,6 +231,7 @@ def consolidate_run_dictionary(rundictionary, polrate=None):
     rundictionary = change_duplicate_time_points(rundictionary)
     #Rescale all of the time vectors in the rundictionary to align with timelin
     rundictionary = rescale_time_vectors(rundictionary, timeline)
+    rundictionary = change_duplicate_time_points(rundictionary)
     #Do a final polishing step to make sure that there are not duplicate time points
     return rundictionary, timebofbaseadition, sequence
 
@@ -247,14 +248,14 @@ def change_duplicate_time_points(dictionaryofruns):
                 #need to shift current time up
                 timelist[index] += 0.001
             previoustime = currenttime
-        #ictionaryofruns[runnumber]['time'] = timelist
+        #ictionaryofruns[runnumber]['time'] = TIMELIST
     return dictionaryofruns
 
 def calculate_pol_rate(dictionaryofruns, polrate=None):
     """ function scans through run dictionary to calcuate pol rate if this
     value wasn't previously provided
     """
-    if polrate:
+    if polrate is not None:
         timeofbaseaddition = polrate
         for runnumber in dictionaryofruns:
             if dictionaryofruns[runnumber]['sequence']:
@@ -281,7 +282,7 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
                 if len(timeofbaseaddition) == 8:
                     timeofbaseaddition.append(tempbaseadditionlist)
                     break
-        timeofbaseaddition = np.round(np.mean(tempbaseadditionlist), 2)
+        timeofbaseaddition = np.round(np.mean(tempbaseadditionlist), 1)
         #Make the timeline
     timeline = []
     for basecount in range(len(sequence)):
@@ -308,6 +309,12 @@ def rescale_time_vector(timelist, dotbracketlist, timeline):
     presize = 0
     for count, dotbracket in enumerate(dotbracketlist):
         cursize = len(dotbracket)
+        #Second condition accounts for first pass
+#         print 'presize - ' + str(presize)
+#         print 'pretime - ' + str(timelist[countstart])
+#         print 'cursize - ' + str(cursize)
+#         print 'curtime - ' + str(timelist[count])
+#         raw_input()
         if cursize > presize:
             if presize == 0:
                 presize = cursize
@@ -318,15 +325,18 @@ def rescale_time_vector(timelist, dotbracketlist, timeline):
             presize = cursize
             countstart = count
         #check to see if there are any more addition steps
-        elif presize == totalsize:
+        if presize == totalsize:
 
-            diff_last_add = timeline[-1] - timelist[count - 1]
-            timelist[count - 1] = timeline[-1]
-            for new_count in range(count, sizeoftimelist):
+            diff_last_add = timeline[-1] - timelist[count]
+#             print diff_last_add
+#             print timelist[count - 1:]
+            timelist[count] = timeline[-1]
+            for new_count in range(count + 1, sizeoftimelist):
+#                 print timelist[new_count]
                 timelist[new_count] += diff_last_add
+#                 print timelist[new_count]
             break
-    timelist = np.around(timelist, decimals=1)
-    return timelist
+    return np.around(timelist, decimals=1)
 
 def adjust_time_window(timelist, indexstart, indexstop, size, timeline):
     basetime = timeline[size - 1]
@@ -433,7 +443,7 @@ def add_energy_data(energydict, structure, energy):
         energydict[structure] = energy
     return energydict
 
-def calculate_time_list(dictofruns, baseaddition, minstep=25):
+def calculate_time_list(dictofruns, baseaddition):
     templist = []
     for run in dictofruns:
         templist.extend(dictofruns[run]['time'])

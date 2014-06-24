@@ -113,6 +113,7 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
         #Now to generate the compressed version of this dictionary
         if subsummarydict:
             polrate = subsummarydict[directoryname].kine_folding_data()[0]
+            polrate = np.round(polrate, 1)
         temprundict, baseadditiontime, completesequence = \
                       consolidate_run_dictionary(dicttopickle, polrate=polrate)
         compresseddict = compress_run_dictionary(temprundict,
@@ -246,7 +247,7 @@ def change_duplicate_time_points(dictionaryofruns):
             currenttime = time
             if previoustime == currenttime:
                 #need to shift current time up
-                timelist[index] += 0.001
+                timelist[index] += 0.1
             previoustime = currenttime
         #ictionaryofruns[runnumber]['time'] = TIMELIST
     return dictionaryofruns
@@ -256,7 +257,7 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     value wasn't previously provided
     """
     if polrate is not None:
-        timeofbaseaddition = polrate
+        timeofbaseaddition = np.round(polrate, 1)
         for runnumber in dictionaryofruns:
             if dictionaryofruns[runnumber]['sequence']:
                 sequence = dictionaryofruns[runnumber]['sequence']
@@ -374,24 +375,27 @@ def adjust_time_point(orginaltime, orgstart, orgstop, newstart, newstop):
 def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
     dotdict = OrderedDict()
     energydict = {}
-    timelist = calculate_time_list(rundictionary, baseadditiontime)
+    timearray = calculate_time_list(rundictionary, baseadditiontime)
     #Initialize the dictionary
-    for time in timelist:
+    for time in timearray:
         dotdict[time] = Counter()
-    maxtime = max(timelist)
+    maxtime = timearray[-1]
     for runnumber in rundictionary:
         #print runnumber
         temptimelist = rundictionary[runnumber]['time']
         totalnumber = len(temptimelist)
         #add unstructured sequences structures where appropriate
         mintime = temptimelist[0]
-        numberofsinglebasestoadd = int(mintime/baseadditiontime)
+        # numberofsinglebasestoadd = int(mintime/baseadditiontime)
+        numberofsinglebasestoadd = len(rundictionary[runnumber]['dotbracket'][0])
         previousbasecountindex = 0
         for basecount in range(numberofsinglebasestoadd):
-            temptime = basecount * baseadditiontime
+            temptime1 = find_nearest(timearray, basecount * baseadditiontime)
+            temptime2 = find_nearest(timearray,
+                                    (basecount + 1) * baseadditiontime)
             structure = '.'*(basecount + 1)
             dotdict, previousbasecountindex = add_structure_timedictionary(dotdict, structure,
-                        [temptime, temptime + baseadditiontime], previousbasecountindex)
+                        [temptime1, temptime2], previousbasecountindex)
             add_energy_data(energydict, structure, energy=0)
         #print 'initial stuff added'
         #add all of the other structures
@@ -413,6 +417,10 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
     outdict['sequence'] = completesequence
     outdict['baseadditiontime'] = baseadditiontime
     return outdict
+
+def find_nearest(array, value):
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
 
 def normailize_orderddict_counters(ordereddict):
     """adding hacky removal of not used bases"""
@@ -486,7 +494,7 @@ def clean_up_output_data(experimentfolder, singlefile=False):
     Removes all of the undesired files from the output of kinefold
     """
     otherfilestodelete = ['*.rnms', '*.rnm2','*.e'
-                                    ,'*.p', '*.i', '*.rnm']
+                                    ,'*.p', '*.i']#, '*.rnm']
     if not singlefile:
         experimentfolder = os.path.join(experimentfolder, 'output')
         #change to this path

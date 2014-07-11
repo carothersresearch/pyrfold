@@ -71,7 +71,7 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
         new_directory(parmdirectory)
         linkdirectory = os.path.join(nodedirectory, 'myscript-links')
         new_directory(linkdirectory)
-        mybundle_sub(nodedirectory, email, cores, 1, '15:00:00',
+        mybundle_sub(nodedirectory, email, cores, 1, '30:00:00',
             nameofexperiment + '-' + tempnodename, backfill)
         #write_MyScript.sh
         myscript_sub_kinefold(nodedirectory)

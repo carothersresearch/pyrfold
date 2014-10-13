@@ -37,7 +37,7 @@ class AutoVivification(dict):
             return value
 
 def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
-                                        singledirectory=False):
+                singledirectory=False, return_dictionary=False):
     """2014-01-26 15:31 WEV
     :param rawoutputfolder: name of the folder which contians kinefold raw
         output
@@ -105,22 +105,28 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
                 dicttopickle[rnmnumber] = tempdictionary
             except KeyError:
                 print rnmfile
-                print 'KeyError, probably did not finish'
+                print 'KeyError, probably did not finish a simulation'
         #Now to write the complete timecourse data
         temppickledest = os.path.join(TIMECOURSEDIR, directoryname + '.p')
-        with open(temppickledest, 'wb') as topick:
-            pickle.dump(dicttopickle, topick, protocol=2)
+        if not return_dictionary:
+            with open(temppickledest, 'wb') as topick:
+                pickle.dump(dicttopickle, topick, protocol=2)
         #Now to generate the compressed version of this dictionary
         if subsummarydict:
             polrate = subsummarydict[directoryname].kine_folding_data()[0]
             polrate = np.round(polrate, 1)
+        else:
+            polrate = None
         temprundict, baseadditiontime, completesequence = \
                       consolidate_run_dictionary(dicttopickle, polrate=polrate)
         compresseddict = compress_run_dictionary(temprundict,
                                   baseadditiontime, completesequence)
         temppickledest = os.path.join(COMPRESSEDTIMEDIR, directoryname + '.p')
+        if return_dictionary:
+            return dicttopickle, compresseddict
         with open(temppickledest, 'wb') as topick:
             pickle.dump(compresseddict, topick, protocol=2)
+
 
 def finalstructure(processeddirectory, subsummarydict=None,
                  singledirectoryname=None):
@@ -265,6 +271,7 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     else:
         timeofbaseaddition = []
         #Polymerization rate
+        #print dictionaryofruns
         for runnumber in dictionaryofruns:
             tempbaseadditionlist = []
             dotbracketlist = dictionaryofruns[runnumber]['dotbracket']

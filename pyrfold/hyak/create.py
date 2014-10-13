@@ -4,7 +4,6 @@ import glob
 import random
 import math
 import cPickle as pickle
-from .fold.kinefold import write_dat_files, write_req_files
 #import shutil
 
 ############################ Helper Functions ##########################
@@ -95,6 +94,58 @@ def write_sub_summary(directory, devicenametosubobj):
     with open(pathtopicklefile, 'wb') as picklefile:
         pickle.dump(devicenametosubobj, picklefile, protocol=2)
 
+def write_req_files(parmdirectory, outputpath, datdirectory, listofdevices,
+                                                        devicenametosubobj):
+    """(str, int, tuple) -> write .req files for device
+    This will write all of the neccessary req files for kinefold to process
+    """
+    random.seed() #uses system time to initialize random generator
+    #EXPERIMENTAL VARIABLES
+    for devicename in listofdevices:
+        numberofsimulations = devicenametosubobj[devicename].numberofsimulations
+        polrate, requestedtime = devicenametosubobj[devicename].kine_folding_data()
+        psudoknots = devicenametosubobj[devicename].pseudoknots
+        entanglements = devicenametosubobj[devicename].entanglements
+        forcedhelixes = devicenametosubobj[devicename].forcedhelixes
+        exptype = devicenametosubobj[devicename].experimenttype
+        for i in range(numberofsimulations):
+            #create name for req files and outputs
+            reqname = str(i + 1).zfill(3) + devicename
+            #open unique req file
+            with open(os.path.join(parmdirectory, 'job.' + reqname
+                                                        + '.req'), 'wb') as f:
+                #Write random number seed
+                f.write(str(int(round(random.random() * 10000))).zfill(4))
+                #Write all output directories
+                fileext = ['.p', '.e' , '.rnm', '.rnms', '.rnml', '.rnm2']
+                for ext in fileext:
+                    f.write('\n')
+                    f.write(os.path.join(outputpath, devicename, reqname + ext))
+                #Write .dat directory
+                f.write('\n' + os.path.join(datdirectory, devicename + '.dat'))
+                #Write 0 RNA 1 for DNA
+                f.write('\n' + str(0))
+                # helix minimum free energy in kcal/mol: 6.3460741=10kT
+                f.write('\n' + str(6.3460741))
+                #just something needed
+                f.write('\n' + str(10000000))
+                #requested folding time
+                f.write('\n' + str(requestedtime))
+                #psudoknots 1 = yes, 0 = no
+                f.write('\n' + str(int(psudoknots)))
+                #entanglements 1 = yes, 0 = no
+                f.write('\n' + str(int(entanglements)))
+                # simulation type: 1=renaturation; 2 20 =cotrans. @ 20msec/nt
+                if exptype == 2:
+                    f.write('\n' + '2 ' + str(polrate))
+                else:
+                    f.write('\n' + '1')
+                for forc in forcedhelixes:
+                    f.write('\n' + 'F ' + str(forc[0]) + ' ' + str(forc[1]) +
+                                                         ' ' + str(forc[2]))
+                #filename and filename.zip
+                f.write('\n' + devicename + '\n' + devicename + '.zip' + '\n')
+
 def symlinks(exefilepath, filepath, linkdirectory, ext):
     """(str, str(path), str(path)) -> symlinks
     This script connects all files filepath to exefile and places the
@@ -113,6 +164,22 @@ def create_output_directory(directorypath, devicenametosubobj):
     for devicename in devicenametosubobj:
         tempath = os.path.join(directorypath, 'output', devicename)
         new_directory(tempath)
+
+def write_dat_files(datdirectory, listofdevices, devicenametosubobj):
+    """This will fill in the tempnode/dat directory with the neccessary
+    sequence information for processing"""
+    for device in listofdevices:
+        with open(os.path.join(datdirectory,(device + '.dat')), 'wb') as f:
+            f.write("<" + device + '\n')
+            #truncating device from tuple (seq,winStart,winStop)
+            seq = devicenametosubobj[device].sequence
+            start = devicenametosubobj[device].windowstart
+            stop = devicenametosubobj[device].windowstop
+            #accounting for shift in frame str[n:c] doesn't actually read
+            #through to c it will stop at c-1
+            seq = seq[start - 1: stop]
+            seq = dna_to_rna(seq)
+            f.write(seq + '\n')
 
 def nodes_to_devivces(devicenametosubobj, nodes):
     """Since the number of simulations done for every device is dicated now
@@ -298,70 +365,4 @@ def myscript_sub_kinefold(parentdirectory):
         f.write("\n/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static $ParmFile -noprint >/dev/null")
     os.chmod(myscriptpath, 0777)
 
-# def write_req_files(parmdirectory, outputpath, datdirectory, listofdevices,
-#                                                         devicenametosubobj):
-#     """(str, int, tuple) -> write .req files for device
-#     This will write all of the neccessary req files for kinefold to process
-#     """
-#     random.seed() #uses system time to initialize random generator
-#     #EXPERIMENTAL VARIABLES
-#     for devicename in listofdevices:
-#         numberofsimulations = devicenametosubobj[devicename].numberofsimulations
-#         polrate, requestedtime = devicenametosubobj[devicename].kine_folding_data()
-#         psudoknots = devicenametosubobj[devicename].pseudoknots
-#         entanglements = devicenametosubobj[devicename].entanglements
-#         forcedhelixes = devicenametosubobj[devicename].forcedhelixes
-#         exptype = devicenametosubobj[devicename].experimenttype
-#         for i in range(numberofsimulations):
-#             #create name for req files and outputs
-#             reqname = str(i + 1).zfill(3) + devicename
-#             #open unique req file
-#             with open(os.path.join(parmdirectory, 'job.' + reqname
-#                                                         + '.req'), 'wb') as f:
-#                 #Write random number seed
-#                 f.write(str(int(round(random.random() * 10000))).zfill(4))
-#                 #Write all output directories
-#                 fileext = ['.p', '.e' , '.rnm', '.rnms', '.rnml', '.rnm2']
-#                 for ext in fileext:
-#                     f.write('\n')
-#                     f.write(os.path.join(outputpath, devicename, reqname + ext))
-#                 #Write .dat directory
-#                 f.write('\n' + os.path.join(datdirectory, devicename + '.dat'))
-#                 #Write 0 RNA 1 for DNA
-#                 f.write('\n' + str(0))
-#                 # helix minimum free energy in kcal/mol: 6.3460741=10kT
-#                 f.write('\n' + str(6.3460741))
-#                 #just something needed
-#                 f.write('\n' + str(10000000))
-#                 #requested folding time
-#                 f.write('\n' + str(requestedtime))
-#                 #psudoknots 1 = yes, 0 = no
-#                 f.write('\n' + str(int(psudoknots)))
-#                 #entanglements 1 = yes, 0 = no
-#                 f.write('\n' + str(int(entanglements)))
-#                 # simulation type: 1=renaturation; 2 20 =cotrans. @ 20msec/nt
-#                 if exptype == 2:
-#                     f.write('\n' + '2 ' + str(polrate))
-#                 else:
-#                     f.write('\n' + '1')
-#                 for forc in forcedhelixes:
-#                     f.write('\n' + 'F ' + str(forc[0]) + ' ' + str(forc[1]) +
-#                                                          ' ' + str(forc[2]))
-#                 #filename and filename.zip
-#                 f.write('\n' + devicename + '\n' + devicename + '.zip' + '\n')
 
-# def write_dat_files(datdirectory, listofdevices, devicenametosubobj):
-#     """This will fill in the tempnode/dat directory with the neccessary
-#     sequence information for processing"""
-#     for device in listofdevices:
-#         with open(os.path.join(datdirectory,(device + '.dat')), 'wb') as f:
-#             f.write("<" + device + '\n')
-#             #truncating device from tuple (seq,winStart,winStop)
-#             seq = devicenametosubobj[device].sequence
-#             start = devicenametosubobj[device].windowstart
-#             stop = devicenametosubobj[device].windowstop
-#             #accounting for shift in frame str[n:c] doesn't actually read
-#             #through to c it will stop at c-1
-#             seq = seq[start - 1: stop]
-#             seq = dna_to_rna(seq)
-#             f.write(seq + '\n')

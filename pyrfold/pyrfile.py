@@ -10,8 +10,6 @@ easier to work with
 ########################################################################
 ############################ Modules ###################################
 ########################################################################
-import os
-import glob
 import csv
 from  .foldingsub import FoldingSubData
 import cPickle as pickle
@@ -124,127 +122,9 @@ def sub_summary(filename):
             devicetoparts[row[0]] = templist
     return devicetoparts
 
-def summary_file_to_dict(filename):
-    """(filename)->dict(reference stucture name:[[sequence,freq],...])
-    This will be useful for all comparisons of structure
-
-    2013-12-11 10:42 WEV making changes to this to account for the new
-    (..) notation that exists in these files
-
-
-    """
-    # Open the file
-    outdictionary = {}
-    with open(filename, 'rU') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            # Check to see if on name row or partlist row
-            #name,
-            #partname, sequence_n, frequencey_n, ...
-            if (len(row) > 1) and row[1]: #should imply non name and non seq
-                part, sequencelist = grep_from_partlist(row)
-                sequence = next(reader)[0]
-                outdictionary[part] = [sequence, sequencelist]
-    return outdictionary
-
-def summary_refpart_to_sequence(filename):
-    """(filename)->dict(reference stucture name:[[sequence,freq],...])
-    This will be useful for all comparisons of structure
-
-    2013-12-11 10:42 WEV making changes to this to account for the new
-    (..) notation that exists in these files
-    """
-    # Open the file
-    outdictionary = {}
-    with open(filename, 'rU') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            # Check to see if on name row or partlist row
-            #name,
-            #partname, sequence_n, frequencey_n, ...
-            if (len(row) > 1) and row[1]: #should imply non name and non seq
-                part, sequencelist = grep_from_partlist(row)
-                outdictionary[part] = sequencelist #actually a [[],[],...]
-    return outdictionary
-
-def summary_exppart_to_sequence(filename):
-    """(filename)->dict(concstruct name:{partname:[[sequence,freq],...]})
-    This will be useful for all comparisons of structure
-    READS IN the processed experimental summary
-    """
-    # Open the file
-    outdictionary = {}
-    tempdictionary = {}
-    firstpass = 1
-    with open(filename, 'rU') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            # Check to see if on name row or partlist row
-            #name,
-            #partname, sequence_n, frequencey_n, ...
-            if (len(row) > 1) and row[1]: #should imply non name
-                part, sequencelist = grep_from_partlist(row)
-                tempdictionary[part] = sequencelist #actually a [[],[],...]
-                #Let's just skip the sequence to make this workable for now
-                next(reader, None)
-            else: #if no data has been collected
-                if firstpass:
-                    constructname = row[0]
-                    #print constructname + '!'
-                    firstpass = 0
-                else:
-                    outdictionary[constructname] = tempdictionary
-                    #print tempdictionary
-                    tempdictionary = {}
-                    constructname = row[0]
-                    #print constructname
-            #accounting for last entry
-            outdictionary[constructname] = tempdictionary
-    return outdictionary
-
-def grep_from_partlist(sequencelist):
-    """(list)->string, [[],[],...]
-    the list of lists will contain [frequency, sequence]
-    this is done for easy sorting
-
-    >>> x = [['test', 'sequence1', 1, 'sequence2', 2, '', '', 'sequence3', 3]]
-    >>> grep_from_partlist(x)
-    >>> ('test', [['sequence1', 1], ['sequence2', 2], ['sequence3', 3]])
-    """
-    iterator = iter(sequencelist)
-    #Grab first entery
-    name = iterator.next()
-    outlist = []
-    for i, it in enumerate(iterator):
-        #print it
-        if it: #if not empty
-            if not i % 2: #if first entry
-                outlistcomponent = [float(it)]
-            else: #If second entry
-                outlistcomponent.append(it)
-            if len(outlistcomponent) == 2: #only two entries required
-                outlist.append(outlistcomponent)
-    return name, outlist
-
-def get_round_summaries_data(filename):
-    """2014-01-10 WEV
-    This is being modified to it's most basic form assuming that only
-    filenames as well as frequences are stored in this file
-    """
-    outlist = []
-    with open(filename, 'rU') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader, None) #skips the ehader
-        for row in reader:
-            templist = [float(row[1]), row[0]]
-            outlist.append(templist)
-    return outlist
-
 ########################################################################
 ############################   Write  ##################################
 ########################################################################
-
-
 
 def blank_form(filename):
     """()-> csv file to fill in

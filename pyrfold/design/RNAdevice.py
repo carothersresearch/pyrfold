@@ -2,6 +2,7 @@
 This module should aide in the design of RNAdevices for the design of
 RNAparts and devices.
 """
+import random
 
 class RNAdevice(object):
     """Basic class for the design of these parts"""
@@ -16,7 +17,7 @@ class RNAdevice(object):
         #self.update_sequence()
 
     def __str__(self):
-        return self.sequence
+        return convert_to_RNA(self.sequence)
 
     def change_part_sequence(self, partname, sequence):
         partindex = self.partlist.index(partname)
@@ -59,7 +60,7 @@ class RNAdevice(object):
 
 class RNAsequence():
     def __init__(self, sequence):
-        self.sequence = self.convert_to_RNA(sequence)
+        self.sequence = convert_to_RNA(sequence)
 
     def reverse_complement(self):
         tempseq = self.sequence.replace('A', 'x')
@@ -70,17 +71,10 @@ class RNAsequence():
         tempseq = tempseq.replace('x', 'C')
         self.sequence = tempseq[::-1]
 
-    def convert_to_RNA(self, sequence):
-        sequence = sequence.upper()
-        return sequence.replace('T', 'U')
-
     def __str__(self):
         return self.sequence
 
-
-import random
-
-class helix():
+class Helix():
     """This class will simply keep track of two sides of helix and
     autoamtically generate one half based on the other half
     """
@@ -108,3 +102,81 @@ class helix():
             self.helixes[1] = rev_comp
         else:
             self.helixes[0] = rev_comp
+
+    def randomize_helix(self, sizerange, randomly_substitue_u_for_c=False):
+        """This will generate a random helix """
+        self.size = random.choice(range(sizerange[0],
+                                        sizerange[1] + 1))
+        self.helixes[0] = random_sequence(self.size)
+        self.generate_helix(self, randomly_substitue_u_for_c=False)
+
+class Unpaired():
+    """This class will have the basic functionality of making unpaired
+    sequences specifically with random generation in mind
+    :param sizerange: The lower and upper bound of size of a given sequence
+    :type sizerange: A list of two ints.
+    :param GC_range: The lower and upper bounds of GC fraction allowed
+    :type GC_range: A list of two ints
+    """
+    def __init__(self, sizerange, GC_range=None):
+        self.sequence = ''
+        self.size = None
+        self.sizerange = sizerange
+        self.gcrange = GC_range
+
+    def __str__(self):
+        return self.sequence
+
+    def generate_random_sequence(self):
+        """
+        Randomly creates a sequence based on requirements
+        """
+        self.size = random.choice(range(self.sizerange[0],
+                                        self.sizerange[1] + 1))
+        self.sequence = random_sequence(self.size, self.gcrange)
+
+def random_sequence(size, GC_range=None):
+    """
+    Simple Random RNA generating random sequence generator
+    """
+    for i in range(10000):
+        out = []
+        for placecounter in range(size):
+            out.append(random.choice(['A', 'U', 'G', 'C']))
+        if GC_range:
+            if GC_range[0] <= GC_content(out) <= GC_range[1]:
+                return ''.join(out)
+        else:
+            return ''.join(out)
+
+def generate_docking_site(site_size = 20):
+    for i in range(10000): #long counter to make sure we find a sequence that works
+        out = []
+        #First base biased to be a G or C
+        first_base = random.choice(['G', 'C', 'G', 'C', 'G', 'C', 'A', 'U'])
+        out.append(first_base)
+        for count in range(site_size - 1):
+            out.append(random.choice(['A', 'U', 'G', 'C']))
+        out = ''.join(out)
+        #Make sure that the sequence content makes sense
+        if 0.35 <= GC_content(out) <= 0.5:
+            return ''.join(out)
+
+def GC_content(sequence):
+    GC_count = sequence.count('G')
+    GC_count += sequence.count('C')
+    return float(GC_count)/len(sequence)
+
+def convert_to_RNA(sequence):
+    sequence = sequence.upper()
+    return sequence.replace('T', 'U')
+
+
+
+
+
+
+
+
+
+

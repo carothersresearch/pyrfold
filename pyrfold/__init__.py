@@ -4,6 +4,7 @@ from . import hyak
 from . import compare
 from . import pyrfile
 from . import design
+from . import fold
 from . foldingsub import FoldingSubData
 
 class AutoVivification(dict):

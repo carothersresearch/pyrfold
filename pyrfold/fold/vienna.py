@@ -146,7 +146,7 @@ class Vienna(object):
         return unbounds
 
     def hybridization_mfe(self, simtype='duplex', bindingsequence=False,
-                 temp=37.0, indexs=None):
+                 temp=37.0, indexs=None, noGU=False):
         """ Calculate the mfe of two RNA seqeunces complexing
         :param temp: Temperature at which to run calculations.
         :type temp: float
@@ -171,16 +171,28 @@ class Vienna(object):
         else:
             tempseqs = [self._seqs[indexs[0]], self._seqs[indexs[1]]]
         # self._check_tempdir()
+        sub_command = []
         if simtype == 'cofold':
-            process = Popen(['RNAcofold', '-T', str(temp)], stdin=PIPE,
-                            stdout=PIPE, stderr=STDOUT, cwd=self._tempdir)
+            sub_command.append('RNAcofold')
+        elif simtype == 'duplex':
+            sub_command.append('RNAduplex')
+        else:
+            #Write some error thing here
+            pass
+        sub_command.append('-T')
+        sub_command.append(str(temp))
+        if noGU:
+            sub_command.append('--noGU')
+        if simtype == 'cofold':
+            process = Popen(sub_command, stdin=PIPE,
+                            stdout=PIPE, stderr=STDOUT)
             stringtoinput = tempseqs[0] + '&' + tempseqs[1]
             output = process.communicate(input=stringtoinput)[0]
             lines = output.splitlines()
             mfe = float(lines[-1].split('(')[-1].split(')')[0].strip())
         elif simtype == 'duplex':
-            process = Popen(['RNAduplex', '-T', str(temp)], stdin=PIPE,
-                            stdout=PIPE, stderr=STDOUT, cwd=self._tempdir)
+            process = Popen(sub_command, stdin=PIPE,
+                            stdout=PIPE, stderr=STDOUT)
             stringtoinput = tempseqs[0] + '\n' + tempseqs[1]
             output = process.communicate(input=stringtoinput)[0]
             mfe = float(output.split('(')[-1].split(')')[0])

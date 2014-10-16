@@ -57,6 +57,58 @@ class RNAdevice(object):
         self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
 
+class RNApart():
+    """Basic class for the design of these parts"""
+    def __init__(self, partlist, sequencelist):
+        self.partlist = partlist
+        self.sequencelist = sequencelist
+        self.parttoposition = {}
+        self.parttosequence = {}
+        self.sequence = ''
+        #Make dictionary of partname to sequence and partname to sequence
+        self.update_part_index_and_sequence_dict()
+        #self.update_sequence()
+
+    def __str__(self):
+        return convert_to_RNA(self.sequence)
+
+    def change_part_sequence(self, partname, sequence):
+        partindex = self.partlist.index(partname)
+        self.sequencelist[partindex] = sequence
+        self.update_part_index_and_sequence_dict()
+
+    def add_part(self, part, sequence, requestedposition):
+        """Will add a part and a sequence to the partlist and sequencelists"""
+        self.partlist.insert(requestedposition, part)
+        self.sequencelist.insert(requestedposition, sequence)
+        self.update_part_index_and_sequence_dict()
+
+    def remove_part(self, part):
+        """finds the part that is requested and removes it from the partlist"""
+        partindex = self.partlist.index(part)
+        self.partlist.pop(partindex)
+        self.sequencelist.pop(partindex)
+        self.update_part_index_and_sequence_dict()
+
+    def part(self, part):
+        return self.parttosequence[part]
+
+    def parts(self, partlist):
+        out = ''
+        for part in partlist:
+            out += self.parttosequence[part]
+        return out
+
+    def update_part_index_and_sequence_dict(self):
+        listofindexs = []
+        leftindex = 0
+        for index, part in enumerate(self.partlist):
+            rightindex = leftindex + len(self.sequencelist[index])
+            listofindexs.append([leftindex, rightindex])
+            leftindex = rightindex
+        self.parttoposition = dict(zip(self.partlist, listofindexs))
+        self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
+        self.sequence = ''.join(self.sequencelist)
 
 class RNAsequence():
     def __init__(self, sequence):
@@ -170,6 +222,10 @@ def GC_content(sequence):
 def convert_to_RNA(sequence):
     sequence = sequence.upper()
     return sequence.replace('T', 'U')
+
+def convert_to_DNA(sequence):
+    sequence = str(sequence).upper()
+    return sequence.replace('U', 'T')
 
 
 

@@ -5,6 +5,7 @@ from . import compare
 from . import pyrfile
 from . import design
 from . import fold
+from . import analyze
 from . foldingsub import FoldingSubData
 
 class AutoVivification(dict):

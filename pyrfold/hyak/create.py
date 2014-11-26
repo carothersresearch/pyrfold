@@ -4,8 +4,8 @@ import glob
 import random
 import math
 import cPickle as pickle
-from .. import fold.kinefold.write_dat_files as write_dat_files
-from .. import fold.kinefold.write_req_files as write_req_files
+from ..fold.kinefold import write_dat_files as write_dat_files
+from ..fold.kinefold import write_req_files as write_req_files
 #import shutil
 
 ############################ Helper Functions ##########################

@@ -10,7 +10,7 @@ add a wildcardstructure thing like ****** when structures not yet exposed
 
 import math
 import numpy as np
-from scipy.signal import argrelextrema
+# from scipy.signal import argrelextrema
 from scipy.optimize import curve_fit
 from copy import deepcopy
 from collections import OrderedDict

@@ -305,8 +305,6 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
                 if len(tempbaseadditionlist) == 8:
                     timeofbaseaddition.append(np.mean(tempbaseadditionlist))
                     break
-        print timeofbaseaddition
-        print len(timeofbaseaddition)
         timeofbaseaddition = np.round(np.mean(timeofbaseaddition), 1)
         #Make the timeline
     timeline = []

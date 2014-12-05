@@ -258,9 +258,17 @@ def change_duplicate_time_points(dictionaryofruns):
         #ictionaryofruns[runnumber]['time'] = TIMELIST
     return dictionaryofruns
 
+
 def calculate_pol_rate(dictionaryofruns, polrate=None):
     """ function scans through run dictionary to calcuate pol rate if this
-    value wasn't previously provided
+    value is not contained in the pickled structure
+    :param dictionaryofruns: Silly dictionary run:dotrbacket etc....
+    :type dictionaryofruns: dict
+    :param polrate: The polrate in ms/nt
+    :type polrate: float
+    :return timeofbaseaddition: ms/nt 
+    :return timeline: Timeline of base addition. EVery time point a base was added 
+    :return timeofbaseaddition: list 
     """
     if polrate is not None:
         timeofbaseaddition = np.round(polrate, 1)
@@ -278,24 +286,34 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
             timelist = dictionaryofruns[runnumber]['time']
             if dictionaryofruns[runnumber]['sequence']:
                 sequence = dictionaryofruns[runnumber]['sequence']
+            first_iteration = True
             for counter, dotbracket in enumerate(dotbracketlist):
-                currentlength = len(dotbracket)
+                if first_iteration:
+                    first_iteration = False
+                    currentlength = len(dotbracket)
+                else:
+                    if len(dotbracket) == currentlength:
+                        continue
+                    currentlength = len(dotbracket)
                 shift = 1
-                while counter-shift >= 0:
+                while counter-shift > 0:
                     if len(dotbracketlist[counter - shift]) == currentlength:
                         shift += 1
                     else:
                         tempbaseadditionlist.append(timelist[counter] - timelist[counter-shift])
                         break
-                if len(timeofbaseaddition) == 8:
-                    timeofbaseaddition.append(tempbaseadditionlist)
+                if len(tempbaseadditionlist) == 8:
+                    timeofbaseaddition.append(np.mean(tempbaseadditionlist))
                     break
-        timeofbaseaddition = np.round(np.mean(tempbaseadditionlist), 1)
+        print timeofbaseaddition
+        print len(timeofbaseaddition)
+        timeofbaseaddition = np.round(np.mean(timeofbaseaddition), 1)
         #Make the timeline
     timeline = []
     for basecount in range(len(sequence)):
         timeline.append(basecount * timeofbaseaddition)
     return timeofbaseaddition, timeline, sequence
+
 
 def rescale_time_vectors(dictionaryofruns, timeline):
     """This function needs to rescale all time vectors to align with the

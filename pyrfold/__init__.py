@@ -1,4 +1,5 @@
-"""importing all of the sub modules
+"""
+importing all of the sub modules
 """
 from . import hyak
 from . import compare

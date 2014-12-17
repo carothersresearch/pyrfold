@@ -4,7 +4,8 @@ RNAparts and devices.
 """
 import random
 
-class RNAdevice(object):
+
+class Part():
     """Basic class for the design of these parts"""
     def __init__(self, partlist, sequencelist):
         self.partlist = partlist
@@ -12,9 +13,9 @@ class RNAdevice(object):
         self.parttoposition = {}
         self.parttosequence = {}
         self.sequence = ''
-        #Make dictionary of partname to sequence and partname to sequence
+        # Make dictionary of partname to sequence and partname to sequence
         self.update_part_index_and_sequence_dict()
-        #self.update_sequence()
+        # self.update_sequence()
 
     def __str__(self):
         return convert_to_RNA(self.sequence)
@@ -54,100 +55,30 @@ class RNAdevice(object):
             listofindexs.append([leftindex, rightindex])
             leftindex = rightindex
         self.parttoposition = dict(zip(self.partlist, listofindexs))
-        self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
+        self.parttosequence = dict(zip(self.partlist,
+                                  [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
 
-class RNApart():
-    """Basic class for the design of these parts"""
-    def __init__(self, partlist, sequencelist):
-        self.partlist = partlist
-        self.sequencelist = sequencelist
-        self.parttoposition = {}
-        self.parttosequence = {}
-        self.sequence = ''
-        #Make dictionary of partname to sequence and partname to sequence
-        self.update_part_index_and_sequence_dict()
-        #self.update_sequence()
-
-    def __str__(self):
-        return convert_to_RNA(self.sequence)
-
-    def change_part_sequence(self, partname, sequence):
-        partindex = self.partlist.index(partname)
-        self.sequencelist[partindex] = sequence
-        self.update_part_index_and_sequence_dict()
-
-    def add_part(self, part, sequence, requestedposition):
-        """Will add a part and a sequence to the partlist and sequencelists"""
-        self.partlist.insert(requestedposition, part)
-        self.sequencelist.insert(requestedposition, sequence)
-        self.update_part_index_and_sequence_dict()
-
-    def remove_part(self, part):
-        """finds the part that is requested and removes it from the partlist"""
-        partindex = self.partlist.index(part)
-        self.partlist.pop(partindex)
-        self.sequencelist.pop(partindex)
-        self.update_part_index_and_sequence_dict()
-
-    def part(self, part):
-        return self.parttosequence[part]
-
-    def parts(self, partlist):
-        out = ''
-        for part in partlist:
-            out += self.parttosequence[part]
-        return out
-
-    def update_part_index_and_sequence_dict(self):
-        listofindexs = []
-        leftindex = 0
-        for index, part in enumerate(self.partlist):
-            rightindex = leftindex + len(self.sequencelist[index])
-            listofindexs.append([leftindex, rightindex])
-            leftindex = rightindex
-        self.parttoposition = dict(zip(self.partlist, listofindexs))
-        self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
-        self.sequence = ''.join(self.sequencelist)
-
-class RNAsequence():
-    def __init__(self, sequence):
-        self.sequence = convert_to_RNA(sequence)
-
-    def reverse_complement(self):
-        tempseq = self.sequence.replace('A', 'x')
-        tempseq = tempseq.replace('U', 'A')
-        tempseq = tempseq.replace('x', 'U')
-        tempseq = tempseq.replace('G', 'x')
-        tempseq = tempseq.replace('C', 'G')
-        tempseq = tempseq.replace('x', 'C')
-        self.sequence = tempseq[::-1]
-
-    def __str__(self):
-        return self.sequence
 
 class Helix():
     """This class will simply keep track of two sides of helix and
     autoamtically generate one half based on the other half
     """
-    def __init__(self, helix0 = '', helix1 = ''):
+    def __init__(self, helix0='', helix1=''):
         """helix0 and helix1 are the left and right half of a helix
         """
         self.helixes = [helix0, helix1]
 
-    def generate_helix(self, basedon = 0, randomly_substitue_u_for_c = False):
+    def generate_helix(self, basedon=0, randomly_substitue_u_for_c=False):
         """ this will synthesize the other half of the helix based on
         the squence based on the other half """
-        templatehelix = RNAsequence(self.helixes[basedon])
-        templatehelix.reverse_complement()
-        rev_comp = templatehelix.sequence
-        #print rev_comp
+        rev_comp = reverse_complement(self.helixes[basedon])
+        # print rev_comp
         if randomly_substitue_u_for_c:
             sequence = []
             for base in rev_comp:
                 if base == 'C':
                     base = random.choice(['C', 'C', 'U'])
-
                 sequence.append(base)
             rev_comp = ''.join(sequence)
         if basedon == 0:
@@ -155,12 +86,14 @@ class Helix():
         else:
             self.helixes[0] = rev_comp
 
-    def randomize_helix(self, sizerange, randomly_substitue_u_for_c=False):
+    def generate_random_helix(self, sizerange,
+                              randomly_substitue_u_for_c=False, GC_range=None):
         """This will generate a random helix """
         self.size = random.choice(range(sizerange[0],
                                         sizerange[1] + 1))
-        self.helixes[0] = random_sequence(self.size)
-        self.generate_helix(self, randomly_substitue_u_for_c=False)
+        self.helixes[0] = random_sequence(self.size, GC_range)
+        self.generate_helix(randomly_substitue_u_for_c=False)
+
 
 class Unpaired():
     """This class will have the basic functionality of making unpaired
@@ -168,7 +101,7 @@ class Unpaired():
     :param sizerange: The lower and upper bound of size of a given sequence
     :type sizerange: A list of two ints.
     :param GC_range: The lower and upper bounds of GC fraction allowed
-    :type GC_range: A list of two ints
+    :type GC_range: float
     """
     def __init__(self, sizerange, GC_range=None):
         self.sequence = ''
@@ -179,13 +112,38 @@ class Unpaired():
     def __str__(self):
         return self.sequence
 
-    def generate_random_sequence(self):
+    def generate_random_unpaired(self):
         """
         Randomly creates a sequence based on requirements
         """
         self.size = random.choice(range(self.sizerange[0],
                                         self.sizerange[1] + 1))
         self.sequence = random_sequence(self.size, self.gcrange)
+
+
+class Hairpin(Helix, Unpaired):
+    """This class will combine the functionality of Helix and Unpaired
+    to create a standard hairpin
+    """
+    def __init__(self, helix_size_range=None, loop_size_range=None,
+                 pos_helix='', neg_helix='', ):
+        Helix.__init__(self, pos_helix, neg_helix)
+        Unpaired.__init__(self, loop_size_range)
+        self.helix_size_range = helix_size_range
+
+    def __str__(self):
+        return self.helixes[0] + self.sequence + self.helixes[1]
+
+    def randomize_hairpin(self, unpaired_GC_range, helix_GC_range,
+                          random_sub_helix=False):
+        self.gcrange = unpaired_GC_range
+        self.generate_random_unpaired()
+        self.generate_random_helix(self.helix_size_range, random_sub_helix,
+                                   helix_GC_range)
+
+    def __repr__(self):
+        return self.helixes[0] + ' ' + self.sequence + ' ' + self.helixes[1]
+
 
 def random_sequence(size, GC_range=None):
     """
@@ -201,33 +159,47 @@ def random_sequence(size, GC_range=None):
         else:
             return ''.join(out)
 
-def generate_docking_site(site_size = 20):
-    for i in range(10000): #long counter to make sure we find a sequence that works
+
+def generate_docking_site(site_size=20):
+    for i in range(10000):  # long counter tfind a sequence that works
         out = []
-        #First base biased to be a G or C
+        # First base biased to be a G or C
         first_base = random.choice(['G', 'C', 'G', 'C', 'G', 'C', 'A', 'U'])
         out.append(first_base)
         for count in range(site_size - 1):
             out.append(random.choice(['A', 'U', 'G', 'C']))
         out = ''.join(out)
-        #Make sure that the sequence content makes sense
+        # Make sure that the sequence content makes sense
         if 0.35 <= GC_content(out) <= 0.5:
             return ''.join(out)
+
 
 def GC_content(sequence):
     GC_count = sequence.count('G')
     GC_count += sequence.count('C')
     return float(GC_count)/len(sequence)
 
+
 def convert_to_RNA(sequence):
     sequence = sequence.upper()
     return sequence.replace('T', 'U')
+
 
 def convert_to_DNA(sequence):
     sequence = str(sequence).upper()
     return sequence.replace('U', 'T')
 
 
+def reverse_complement(sequence):
+    sequence = convert_to_RNA(sequence)
+    tempseq = sequence.replace('A', 'x')
+    tempseq = tempseq.replace('U', 'A')
+    tempseq = tempseq.replace('x', 'U')
+    tempseq = tempseq.replace('G', 'x')
+    tempseq = tempseq.replace('C', 'G')
+    tempseq = tempseq.replace('x', 'C')
+    sequence = tempseq[::-1]
+    return sequence
 
 
 

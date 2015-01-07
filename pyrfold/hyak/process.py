@@ -24,6 +24,7 @@ def make_sure_path_exists(path):
         if exception.errno != errno.EEXIST:
             raise
 
+
 ########################################################################
 ############################ Core Process     ##########################
 ########################################################################
@@ -36,8 +37,9 @@ class AutoVivification(dict):
             value = self[item] = type(self)()
             return value
 
+
 def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
-                singledirectory=False, return_dictionary=False):
+               singledirectory=False, return_dictionary=False):
     """2014-01-26 15:31 WEV
     :param rawoutputfolder: name of the folder which contians kinefold raw
         output
@@ -56,12 +58,12 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
     'energy' [kcal/mol] : list
     'type' : str (this is the type of experimnet renaturation)
     """
-    #Make the directory to write the files to
+    # Make the directory to write the files to
     TIMECOURSEDIR = os.path.join(processeddirectory, 'timecourse')
     COMPRESSEDTIMEDIR = os.path.join(processeddirectory, 'compressedtime')
     make_sure_path_exists(TIMECOURSEDIR)
     make_sure_path_exists(COMPRESSEDTIMEDIR)
-    #collect all of the experiment files
+    # collect all of the experiment files
     if not singledirectory:
         experimentdirectorylist = os.walk(rawoutputfolder).next()[1]
     else:
@@ -72,13 +74,13 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
                                                 directoryname, '*.rnm'))
         else:
             temprnmfilelist = glob.glob(os.path.join(rawoutputfolder,
-                                                            '*.rnm'))
+                                                     '*.rnm'))
             directoryname = os.path.basename(directoryname)
         dicttopickle = {}
         for rnmfile in temprnmfilelist:
             rnmname = os.path.basename(rnmfile).split('.')[0]
-            rnmnumber = int(rnmname[0:3]) #should pull just the runnumber
-            #open the file for reading
+            rnmnumber = int(rnmname[0:3])  # should pull just the runnumber
+            # open the file for reading
             tempdictionary = {}
             tempdictionary['time'] = []
             tempdictionary['dotbracket'] = []
@@ -90,7 +92,7 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
                         continue
                     elif i % 2 == 0:
                         kineobj = KineRmnOutput(line)
-                    elif (i+1) % 2 == 0: #should account for odds
+                    elif (i+1) % 2 == 0:  # should account for odds
                         kineobj.addHelix(line)
                         kineobj.generateDotBracket()
                         tempdictionary['time'].append(kineobj.time)
@@ -106,21 +108,25 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
             except KeyError:
                 print rnmfile
                 print 'KeyError, probably did not finish a simulation'
-        #Now to write the complete timecourse data
+            except IndexError:
+                print rnmfile
+                print 'IndexError, probably did not finish a simulation'
+        # Now to write the complete timecourse data
         temppickledest = os.path.join(TIMECOURSEDIR, directoryname + '.p')
         if not return_dictionary:
             with open(temppickledest, 'wb') as topick:
                 pickle.dump(dicttopickle, topick, protocol=2)
-        #Now to generate the compressed version of this dictionary
+        # Now to generate the compressed version of this dictionary
         if subsummarydict:
             polrate = subsummarydict[directoryname].kine_folding_data()[0]
             polrate = np.round(polrate, 1)
         else:
             polrate = None
         temprundict, baseadditiontime, completesequence = \
-                      consolidate_run_dictionary(dicttopickle, polrate=polrate)
+            consolidate_run_dictionary(dicttopickle, polrate=polrate)
         compresseddict = compress_run_dictionary(temprundict,
-                                  baseadditiontime, completesequence)
+                                                 baseadditiontime,
+                                                 completesequence)
         temppickledest = os.path.join(COMPRESSEDTIMEDIR, directoryname + '.p')
         if return_dictionary:
             return dicttopickle, compresseddict
@@ -129,7 +135,7 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
 
 
 def finalstructure(processeddirectory, subsummarydict=None,
-                 singledirectoryname=None):
+                   singledirectoryname=None):
     """This will go through the previously picked timecoures data
     and pull out part structures for all of the parts that are outlined
     in the summart dictionary
@@ -143,18 +149,19 @@ def finalstructure(processeddirectory, subsummarydict=None,
         process a single pickle if not none this will be the name of the
     :return: builds a a system of pickle files
     """
-    #Sort the paths
+    # Sort the paths
     pathtotimecourse = os.path.join(processeddirectory, 'timecourse')
     pathtofinalstructures = os.path.join(processeddirectory, 'finalstructure')
     if not os.path.exists(pathtofinalstructures):
         make_sure_path_exists(pathtofinalstructures)
-    #collect all of the experiment files
+    # collect all of the experiment files
     if not singledirectoryname:
         pickletimelist = [ls for ls in os.listdir(pathtotimecourse)
-                    if os.path.isfile(os.path.join(pathtotimecourse, ls))]
+                          if os.path.isfile(os.path.join(pathtotimecourse, ls))
+                          ]
     else:
         pickletimelist = [singledirectoryname]
-    #Now to go through all of these files
+    # Now to go through all of these files
     for pick in pickletimelist:
         if subsummarydict:
             partdict = subsummarydict[pick.split('.')[0]].adjustedpartstartstop
@@ -212,13 +219,14 @@ def create_finalpart_dict(timecoursedict, dictofparts=None):
             sequencecount = Counter(listofsequences)
             if len(sequencecount) > 1:
                 print "Sequences DONOT match up for {}".format(part)
-            #Convert count to average
+            # Convert count to average
             totalcount = float(sum(dotbracketcount.viewvalues()))
             for dotbrac in dotbracketcount:
                 dotbracketcount[dotbrac] /= totalcount
             tempdict['parts'][part]['sequence'] = sequencecount.keys()[0]
             tempdict['parts'][part]['dotbracket'] = dotbracketcount
     return tempdict
+
 
 ###############################################################################
 ###############################################################################
@@ -242,6 +250,7 @@ def consolidate_run_dictionary(rundictionary, polrate=None):
     #Do a final polishing step to make sure that there are not duplicate time points
     return rundictionary, timebofbaseadition, sequence
 
+
 def change_duplicate_time_points(dictionaryofruns):
     """This will scan through all of the runs and add a small
     amount of time to timepoints which are reported as being
@@ -252,10 +261,10 @@ def change_duplicate_time_points(dictionaryofruns):
         for index, time in enumerate(timelist):
             currenttime = time
             if previoustime == currenttime:
-                #need to shift current time up
+                # need to shift current time up
                 timelist[index] += 0.1
             previoustime = currenttime
-        #ictionaryofruns[runnumber]['time'] = TIMELIST
+        # dictionaryofruns[runnumber]['time'] = TIMELIST
     return dictionaryofruns
 
 
@@ -266,9 +275,9 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     :type dictionaryofruns: dict
     :param polrate: The polrate in ms/nt
     :type polrate: float
-    :return timeofbaseaddition: ms/nt 
-    :return timeline: Timeline of base addition. EVery time point a base was added 
-    :return timeofbaseaddition: list 
+    :return timeofbaseaddition: ms/nt
+    :return timeline: Timeline of base addition. EVery time point a base was added
+    :return timeofbaseaddition: list
     """
     if polrate is not None:
         timeofbaseaddition = np.round(polrate, 1)

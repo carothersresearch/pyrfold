@@ -7,13 +7,24 @@ a copy of pyrfold/
 """
 import os
 from pyrfold.hyak import submission
+import shutil
 
-#Need to fill in the list of submission files
 LISTOFSUBMISSIONFILES = []
 EMAIL = ''
 NUMBEROFNODES = 2
 
+
+ROOT = os.path.getcwd()
+PROCESSINGSCRIPTNAME = 'kinefold_simulation_and_processing.py'
+PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, 'pyrfold', 'hyak', 'scripts',
+                                      PROCESSINGSCRIPTNAME)
+shutil.copy(PATHTOPROCESSINGSCRIPT, ROOT)
+PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, PROCESSINGSCRIPTNAME)
+# Need to fill in the list of submission files
+
 ROOT = os.getcwd()
 for submissionfile in LISTOFSUBMISSIONFILES:
     submission.submit_file(os.path.join(ROOT, submissionfile), ROOT, EMAIL,
-        cores=12, backfill=True, nameofexperiment='auto', nodes=NUMBEROFNODES)
+                           processing_script_path=PATHTOPROCESSINGSCRIPT,
+                           cores=12, backfill=True, nameofexperiment='auto',
+                           nodes=NUMBEROFNODES)

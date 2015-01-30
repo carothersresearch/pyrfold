@@ -8,8 +8,10 @@ import csv
 from . import create
 from .. import pyrfile
 
-def submit_file(filepath, writedirectory, email, cores=16, backfill=True,
-                        nameofexperiment='auto', nodes='auto'):
+
+def submit_file(filepath, writedirectory, email, processing_script_path,
+                cores=16, backfill=True, nameofexperiment='auto',
+                nodes='auto'):
     """2014-01-24 09:52 WEV
     :param filepath: path to the hyak submission file
     :type filepath: str
@@ -30,23 +32,22 @@ def submit_file(filepath, writedirectory, email, cores=16, backfill=True,
         will make an approximation for the nodes based on simulations requested
     :type nodes: int, str
     """
-    #Define all of the needed variables
+    # Define all of the needed variables
     experimentname = os.path.basename(filepath).split('.')[0]
     experimentpath = os.path.join(writedirectory, experimentname)
     devicenametosubobj = pyrfile.sub_file(filepath)
     if nameofexperiment == 'auto':
         nameofexperiment = experimentname
-    #Make the directory
+    # Make the directory
     if not os.path.exists(experimentpath):
         os.makedirs(experimentpath)
-    #Make the sub summary
-    # pyrfile.submission(devicetosequence, devicetopart,
-    #                 devicetokinefoldparms, devicetoexperimentalparms,
-    #                 experimentpath)
+    # Make the sub summary
     create.framework(experimentpath, devicenametosubobj, cores,
-        nameofexperiment, email, backfill=backfill, nodes=nodes)
-    #submit files for simulation
+                     nameofexperiment, email, processing_script_path,
+                     backfill=backfill, nodes=nodes)
+    # submit files for simulation
     submit_multiple_nodes(experimentpath)
+
 
 ################# SUBMISSION STUFF ####################################
 def submit_multiple_nodes(parentdirectory):
@@ -65,6 +66,7 @@ def submit_multiple_nodes(parentdirectory):
         os.chdir(os.path.join(node, 'myscript-links'))
         call(callcommand, shell = True)
 
+
 def submit_basic_hyak_framework(myscriptlinksdirectory):
     """ This should submit a given hyak framework
     :param myscriptlinksdirectory: This is the directory of the
@@ -77,8 +79,11 @@ def submit_basic_hyak_framework(myscriptlinksdirectory):
     call(callcommand, shell=True)
 
 ############## RESUBMISSION STUFF ######################################
+
+
 def additional_round_submission(performdict, currentsubpath, foldcutoff,
-            nextroundpath, poldwell, fivethreeshift, email, numsimulations):
+                                nextroundpath, poldwell, fivethreeshift,
+                                email, numsimulations):
     """ This is used to submit an additional round of simulations based on
     a greedy selection
     :param performdict:
@@ -95,17 +100,17 @@ def additional_round_submission(performdict, currentsubpath, foldcutoff,
     :type submissiondata: list
     TODO - unhardcode this additional round sub
     """
-    #Select the winners
+    # Select the winners
     listofdevices = []
     for device in performdict:
         fail = False
-        #Everypart has to fold better than the cutoff
+        # Everypart has to fold better than the cutoff
         for part in performdict[device]:
             if performdict[device][part] < foldcutoff:
                 fail = True
         if not fail:
             listofdevices.append(device)
-    #The sub_summary data contains all of the parts of interest
+    # The sub_summary data contains all of the parts of interest
     summarydata = pyrfile.sub_file(currentsubpath)
     nextroundsubdict = {}
     for device in listofdevices:
@@ -121,15 +126,16 @@ def additional_round_submission(performdict, currentsubpath, foldcutoff,
         tempsubobj.foldtimeafter = poldwell[1]
         tempsubobj.numberofsimulations = numsimulations
         nextroundsubdict[device] = tempsubobj
-    #Get the name of the next round
+    # Get the name of the next round
     nextroundname = os.path.basename(nextroundpath)
     subfiledirectory = os.path.dirname(nextroundpath)
-    #Print the next sub file
+    # Print the next sub file
     pathtonewsub = os.path.join(subfiledirectory, nextroundname + '.csv')
     pyrfile.filled_in_form(pathtonewsub, nextroundsubdict)
-    #Submit the file that was just written
+    # Submit the file that was just written
     submit_file(pathtonewsub, os.path.dirname(pathtonewsub),
         email, cores=16, backfill=False, nodes=2)
+
 
 def combine_sequences_calculate_windowranges(listofsequencecomponents, partindextopartname, windowsize, shiftfraqthree):
     """should simply stitch together components and deterimine the proper

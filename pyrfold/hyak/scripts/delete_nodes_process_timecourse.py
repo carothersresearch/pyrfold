@@ -22,69 +22,69 @@ INPUTFILE = fileinput.input()
 PROCESSINGTYPE = INPUTFILE.next().strip()
 
 if PROCESSINGTYPE == 'deletenodes':
-    #Gather the rest of the information
+    # Gather the rest of the information
     NODEDIRECTORY = INPUTFILE.next().strip()
     shutil.rmtree(NODEDIRECTORY)
 if PROCESSINGTYPE == 'timecourse':
-    #Pull all of the boolean decision variables
+    # Pull all of the boolean decision variables
     FINALSTRUCTURES = int(INPUTFILE.next().strip())
     SINGLEDIRECTORY = int(INPUTFILE.next().strip())
-    #ADDITIONALROUNDOFPROCESS = int(INPUTFILE.next().strip())
-    #Process the data to get timecourse data
+    # ADDITIONALROUNDOFPROCESS = int(INPUTFILE.next().strip())
+    # Process the data to get timecourse data
     FOLDERTOPROCESS = INPUTFILE.next().strip()
     PROCESSEDDIRECTORY = INPUTFILE.next().strip()
     NAMEOFFOLDERTOPROCESS = os.path.basename(FOLDERTOPROCESS)
-    ##Get the reference files
+    # Get the reference files
     SUBSUMMARYFILE = INPUTFILE.next().strip()
     SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
-    #Do processing specific based on the single or multiple directory thing
+    # Do processing specific based on the single or multiple directory thing
     if SINGLEDIRECTORY:
-        #create the timecourse files
+        # create the timecourse files
         hyakp.timecourse(FOLDERTOPROCESS, PROCESSEDDIRECTORY, SUBSUMMARYDATA,
             singledirectory=True)
-        #remove unwanted files
+        # remove unwanted files
         hyakp.clean_up_output_data(FOLDERTOPROCESS, singlefile=True)
     else:
-        #create the timecourse files
+        # create the timecourse files
         hyakp.timecourse(FOLDERTOPROCESS, PROCESSEDDIRECTORY)
-        #remove unwanted files
+        # remove unwanted files
         hyakp.clean_up_output_data(FOLDERTOPROCESS)
     if FINALSTRUCTURES:
-        #Consolidate the data into a final structure file
-        ##process to single files
+        #  Consolidate the data into a final structure file
+        # process to single files
         NAMEOFFOLDER = os.path.basename(FOLDERTOPROCESS)
         if SINGLEDIRECTORY:
             hyakp.finalstructure(PROCESSEDDIRECTORY, SUBSUMMARYDATA,
                                     singledirectoryname=NAMEOFFOLDER + '.p')
         else:
-            #NEED TO BUILD
+            # NEED TO BUILD
             pass
 
 if PROCESSINGTYPE == 'compression':
-    #Gather the additional information
+    # Gather the additional information
     DIRECTORYTOPROCESS = INPUTFILE.next().strip()
     hyakp.compress_and_delete_directory(DIRECTORYTOPROCESS)
 
 if PROCESSINGTYPE == 'additionalround':
-    #This will be linked to a job file that is submitted after
-    #all other files have been submitted
-    #just summary data
+    # This will be linked to a job file that is submitted after
+    # all other files have been submitted
+    # just summary data
     JUSTSUMMARY = int(INPUTFILE.next().strip())
-    #Path to timecourse and final data:
+    # Path to timecourse and final data:
     PROCESSEDDIRECTORY = INPUTFILE.next().strip()
-    #Path to summary files directory
+    # Path to summary files directory
     SUMMARYPATH = INPUTFILE.next().strip()
-    #Path to reference part summary .csv file
+    # Path to reference part summary .csv file
     REFERENCESUMMARYFILE = INPUTFILE.next().strip()
-    #path (to be made) that holds the additional round of processing
+    # path (to be made) that holds the additional round of processing
     NEXTROUNDPATH = INPUTFILE.next().strip()
-    #Name of previous round
+    # Name of previous round
     CURRENTROUNDNAME = INPUTFILE.next().strip()
-    #path to currentround submission file:
+    # path to currentround submission file:
     CURRENTSUBMISSIONPATH = INPUTFILE.next().strip()
-    #Cutoff frequency
+    # Cutoff frequency
     FOLDINGCUTOFF = float(INPUTFILE.next().strip())
-    #Next positions of the simulation
+    # Next positions of the simulation
     POLRATE = float(INPUTFILE.next().strip())
     DWELLTIME = float(INPUTFILE.next().strip())
     FIVEPOS = INPUTFILE.next().strip()
@@ -97,20 +97,20 @@ if PROCESSINGTYPE == 'additionalround':
         THREEPOS = None
     else:
         THREEPOS = int(THREEPOS)
-    #Number of simulations
+    # Number of simulations
     NUMBEROFSIMULATIONS = int(INPUTFILE.next().strip())
     EMAIL = INPUTFILE.next().strip()
     ####################################################################
     # Make the comparisions
     ####################################################################
-    #Get the reference structures to make comaprisons to
+    # Get the reference structures to make comaprisons to
     REFSTRUCT = pyrfile.load_pickled_reference_sub(REFERENCESUMMARYFILE)
-    #Grab all of the final structure data
+    # Grab all of the final structure data
     PATHTOFINALSTRUCTS = os.path.join(PROCESSEDDIRECTORY, 'finalstructure')
-    #Grab all of the .p files for iteration
+    # Grab all of the .p files for iteration
     PICKLELIST = [ls for ls in os.listdir(PATHTOFINALSTRUCTS) if
                     os.path.isfile(os.path.join(PATHTOFINALSTRUCTS, ls))]
-    #Make the comparison for all of the devices
+    # Make the comparison for all of the devices
     STATDICT = {}
     for pickfile in PICKLELIST:
         pickpath = os.path.join(PATHTOFINALSTRUCTS, pickfile)
@@ -118,18 +118,18 @@ if PROCESSINGTYPE == 'additionalround':
             tempfinaldict = pickle.load(pick)
             devicename = pickfile.split('.')[0]
             # devicename = devicename.split('.')[0]
-            #Make the comparison
+            # Make the comparison
             tempcomparedict = compare.folding_frequency(REFSTRUCT,
-                                                                tempfinaldict)
+                                                        tempfinaldict)
             STATDICT[devicename] = tempcomparedict
-    #Build the roundsummary folder
+    # Build the roundsummary folder
     if not os.path.exists(SUMMARYPATH):
         os.mkdir(SUMMARYPATH)
-    #Build the experimental condition.csv and the round-summary
+    # Build the experimental condition.csv and the round-summary
     PATHTOROUND = os.path.join(SUMMARYPATH, CURRENTROUNDNAME + '.csv')
     with open(PATHTOROUND, 'wb') as roundfile:
         writer = csv.writer(roundfile)
-        #build header
+        # build header
         HEADER = ['device_name']
         HEADER.extend(STATDICT[STATDICT.keys()[0]].keys())
         writer.writerow(HEADER)
@@ -141,7 +141,7 @@ if PROCESSINGTYPE == 'additionalround':
 
     PATHTOEXPCOND = os.path.join(SUMMARYPATH, 'exp_cond_summary.csv')
     if os.path.isfile(PATHTOEXPCOND):
-        #open this file and append the information
+        # open this file and append the information
         with open(PATHTOEXPCOND, 'a') as expcondfile:
             writer = csv.writer(expcondfile)
             linetowrite = [CURRENTROUNDNAME]
@@ -158,8 +158,8 @@ if PROCESSINGTYPE == 'additionalround':
             linetowrite.extend(pyrfile.sub_file(CURRENTSUBMISSIONPATH,
                                              justexperimentalconditions=True))
             writer.writerow(linetowrite)
-    #Write hyakp.get_exp_conditions
-    #BUILD OTHER SUBMISSION
+    # Write hyakp.get_exp_conditions
+    # BUILD OTHER SUBMISSION
     hyaks.additional_round_submission(STATDICT, CURRENTSUBMISSIONPATH,
          FOLDINGCUTOFF, NEXTROUNDPATH, [POLRATE, DWELLTIME], [FIVEPOS, THREEPOS],
          EMAIL, NUMBEROFSIMULATIONS)

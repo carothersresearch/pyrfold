@@ -4,6 +4,7 @@ from tempfile import mkdtemp
 from os.path import isdir
 from shutil import rmtree
 
+
 class Vienna(object):
     '''Run Vienna RNA functions on a sequence.'''
     def __init__(self, seqs, dotbrackets=None, constraintstructures=None):
@@ -56,7 +57,7 @@ class Vienna(object):
         return mfes
 
     def mfe(self, temp=50.0, returnstructure=False, index=None,
-                                                    constraintstructure=False):
+            constraintstructure=False):
         '''Calculate the minimum free energy.
         :param temp: Temperature at which to run calculations.
         :type temp: float
@@ -79,7 +80,7 @@ class Vienna(object):
                 tempconstaints = [self.constraintstructures[index]]
             for seq, const in zip(tempseqs, tempconstaints):
                 process = Popen(ARGUMENT, stdin=PIPE,
-                                stdout=PIPE, stderr=STDOUT)#, cwd=self._tempdir)
+                                stdout=PIPE, stderr=STDOUT)
                 stringtoinput = seq + '\n' + const
                 output = process.communicate(input=stringtoinput)[0]
                 lines = output.splitlines()
@@ -95,7 +96,7 @@ class Vienna(object):
             # self._check_tempdir()
             for seq in tempseqs:
                 process = Popen(ARGUMENT, stdin=PIPE,
-                                stdout=PIPE, stderr=STDOUT)#, cwd=self._tempdir)
+                                stdout=PIPE, stderr=STDOUT)
                 output = process.communicate(input=seq)[0]
                 lines = output.splitlines()
                 mfe = lines[-1].split('(')[-1].split(')')[0].strip()

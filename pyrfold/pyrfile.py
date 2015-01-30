@@ -42,6 +42,7 @@ def filled_in_form(filename, devicenametosubobj):
         for i in range(3):
             headers.extend(forcedlist)
         headers.append('posrefpart')
+        headers.append('helix minimum free energy')
         for i in range(5):
             headers.append('part' + str(i+1))
             headers.append('part start')
@@ -80,7 +81,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
         # conditiondict = {}
         with open(inputfile, 'rU') as csvfile:
             reader = csv.reader(csvfile)
-            next(reader, None) #Skips the header
+            next(reader, None) # Skips the header
             for row in reader:
                 if row:
                     # conditiondict['polrate'] = float(row[4])
@@ -92,7 +93,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
     outdict = {}
     with open(inputfile, 'rU') as csvfile:
         reader = csv.reader(csvfile)
-        next(reader, None) #Skips the header
+        next(reader, None)  # Skips the header
         for row in reader:
             if row:
                 tempsubdata = FoldingSubData.from_csv_sub_file_line(row)

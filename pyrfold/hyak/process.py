@@ -129,7 +129,7 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
 
 
 def finalstructure(processeddirectory, subsummarydict=None,
-                 singledirectoryname=None):
+                   singledirectoryname=None):
     """This will go through the previously picked timecoures data
     and pull out part structures for all of the parts that are outlined
     in the summart dictionary
@@ -167,6 +167,7 @@ def finalstructure(processeddirectory, subsummarydict=None,
         pathtopickle = os.path.join(pathtofinalstructures, pick)
         with open(pathtopickle, 'wb') as topickle:
             pickle.dump(outpickdict, topickle, protocol=2)
+
 
 def create_finalpart_dict(timecoursedict, dictofparts=None):
     """helper function to final structure
@@ -266,9 +267,9 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     :type dictionaryofruns: dict
     :param polrate: The polrate in ms/nt
     :type polrate: float
-    :return timeofbaseaddition: ms/nt 
-    :return timeline: Timeline of base addition. EVery time point a base was added 
-    :return timeofbaseaddition: list 
+    :return timeofbaseaddition: ms/nt
+    :return timeline: Timeline of base addition. EVery time point a base was added
+    :return timeofbaseaddition: list
     """
     if polrate is not None:
         timeofbaseaddition = np.round(polrate, 1)
@@ -516,8 +517,8 @@ def clean_up_output_data(experimentfolder, singlefile=False):
     """2014-01-08 17:12 WEV
     Removes all of the undesired files from the output of kinefold
     """
-    otherfilestodelete = ['*.rnms', '*.rnm2','*.e'
-                                    ,'*.p', '*.i']#, '*.rnm']
+    otherfilestodelete = ['*.rnms', '*.rnm2', '*.e',
+                          '*.p']  # , '*.i']  #, '*.rnm']
     if not singlefile:
         experimentfolder = os.path.join(experimentfolder, 'output')
         #change to this path
@@ -529,15 +530,25 @@ def clean_up_output_data(experimentfolder, singlefile=False):
         for filetype in otherfilestodelete:
             filetype = '*/' + filetype
             deletefileiterator = glob.iglob(os.path.join(experimentfolder,
-                                                filetype))
+                                                         filetype))
             for filename in deletefileiterator:
                 os.remove(filename)
     if singlefile:
         for filetype in otherfilestodelete:
             deletefileiterator = glob.iglob(os.path.join(experimentfolder,
-                                                filetype))
+                                                         filetype))
             for filename in deletefileiterator:
                 os.remove(filename)
+
+
+def delete_files_in_folder(directory, name_to_look_for):
+    """This function is delete all of the left over dat files from processing
+    """
+    files_to_delete = [os.path.join(directory, ls) for ls in os.listdir(directory)
+                       if name_to_look_for in ls]
+    for file_name in files_to_delete:
+        os.remove(file_name)
+
 
 def remove_all_node_files(exppath):
     """2013-12-19 12:21 WEV

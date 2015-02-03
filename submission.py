@@ -14,10 +14,11 @@ EMAIL = ''
 NUMBEROFNODES = 2
 
 
-ROOT = os.path.getcwd()
+ROOT = os.getcwd()
 PROCESSINGSCRIPTNAME = 'kinefold_simulation_and_processing.py'
 PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, 'pyrfold', 'hyak', 'scripts',
                                       PROCESSINGSCRIPTNAME)
+# Copy the processing script
 shutil.copy(PATHTOPROCESSINGSCRIPT, ROOT)
 PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, PROCESSINGSCRIPTNAME)
 # Need to fill in the list of submission files

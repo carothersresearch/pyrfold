@@ -4,6 +4,7 @@ from tempfile import mkdtemp
 from os.path import isdir
 from shutil import rmtree
 
+
 class Vienna(object):
     '''Run Vienna RNA functions on a sequence.'''
     def __init__(self, seqs, dotbrackets=None, constraintstructures=None):
@@ -55,8 +56,28 @@ class Vienna(object):
         # self._close()
         return mfes
 
+    def pobabalistic_structures(self, number_of_structures,
+                                temp=37, index=None):
+        """This function employs subopt to sample a number of structures
+        in order to find some sort of probability that the structure
+        you want or don't want is actually present
+        """
+        if index is None:
+            tempseqs = self._seqs
+        else:
+            tempseqs = [self._seqs[index]]
+        ARGUMENT = ['RNAsubopt', '-T', str(temp),
+                    '-p', str(number_of_structures)]
+        for seq in tempseqs:
+            process = Popen(ARGUMENT, stdin=PIPE,
+                            stdout=PIPE, stderr=STDOUT)
+            stringtoinput = seq
+            output = process.communicate(input=stringtoinput)[0]
+            dotbrackets = output.splitlines()
+            return dotbrackets
+
     def mfe(self, temp=50.0, returnstructure=False, index=None,
-                                                    constraintstructure=False):
+            constraintstructure=False):
         '''Calculate the minimum free energy.
         :param temp: Temperature at which to run calculations.
         :type temp: float

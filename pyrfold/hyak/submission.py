@@ -59,12 +59,12 @@ def submit_multiple_nodes(parentdirectory):
     from subprocess import call
     callcommand = 'qsub ../MyBundle.sh'
     nodelist = [ls for ls in os.listdir(parentdirectory)
-                    if os.path.isdir(os.path.join(parentdirectory, ls))
-                    and 'node' in ls]
+                if os.path.isdir(os.path.join(parentdirectory, ls))
+                and 'node' in ls]
     for node in nodelist:
         node = os.path.join(parentdirectory, node)
         os.chdir(os.path.join(node, 'myscript-links'))
-        call(callcommand, shell = True)
+        call(callcommand, shell=True)
 
 
 def submit_basic_hyak_framework(myscriptlinksdirectory):
@@ -134,7 +134,7 @@ def additional_round_submission(performdict, currentsubpath, foldcutoff,
     pyrfile.filled_in_form(pathtonewsub, nextroundsubdict)
     # Submit the file that was just written
     submit_file(pathtonewsub, os.path.dirname(pathtonewsub),
-        email, cores=16, backfill=False, nodes=2)
+                email, cores=16, backfill=False, nodes=2)
 
 
 def combine_sequences_calculate_windowranges(listofsequencecomponents, partindextopartname, windowsize, shiftfraqthree):

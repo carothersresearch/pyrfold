@@ -5,8 +5,8 @@ from random import random, choice
 
 # Dictionaries of complement sequences
 RNA_complement_dict = {'A': 'U',
-                       'U': ['G', 'A'],
-                       'G': ['U', 'C'],
+                       'U': ['A', 'G'],
+                       'G': ['C', 'U'],
                        'C': 'G'}
 
 DNA_complement_dict = {'A': 'T',

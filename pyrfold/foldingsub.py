@@ -61,7 +61,7 @@ class FoldingSubData(object):
                     forcedhelixes.append([int(listfromcsv[index]),
                                           int(listfromcsv[index + 1]),
                                           int(listfromcsv[index + 2])])
-        positionrefpart = listfromcsv[19]
+        positionrefpart = listfromcsv[20]
         if not positionrefpart:
             positionrefpart = None
         polrate = float(listfromcsv[5])
@@ -70,7 +70,7 @@ class FoldingSubData(object):
         pseudoknots = int(listfromcsv[8])
         entanglements = int(listfromcsv[9])
         # Check to see if there is a helix energy provided
-        if not listfromcsv[20]:
+        if not listfromcsv[10]:
             output = cls(name, sequence, windowstart, windowstop,
                          partstartstoplist, partnamelist, positionrefpart,
                          forcedhelixes, polrate, foldtimeafter, experimenttype,
@@ -80,7 +80,7 @@ class FoldingSubData(object):
                          partstartstoplist, partnamelist, positionrefpart,
                          forcedhelixes, polrate, foldtimeafter, experimenttype,
                          pseudoknots, entanglements, numberofsimulations,
-                         int(listfromcsv[20]))
+                         int(listfromcsv[10]))
         return output
 
     def generate_csv_line(self):
@@ -97,12 +97,12 @@ class FoldingSubData(object):
         outputlist.append(self.experimenttype)
         outputlist.append(self.pseudoknots)
         outputlist.append(self.entanglements)
+        outputlist.append(self.helixminfreeenergy)
         for i in range(3):
             if self.forcedhelixes and len(self.forcedhelixes) - 1 >= i:
                 outputlist.extend(self.forcedhelixes[i])
             else:
                 outputlist.extend(['', '', ''])
-        outputlist.append(self.helixminfreeenergy)
         if self.positionrefpart:
             outputlist.append(self.positionrefpart)
         else:

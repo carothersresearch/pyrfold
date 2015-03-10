@@ -11,7 +11,10 @@ from ..fold.kinefold import write_req_files as write_req_files
 PATH_TO_KINEFOLD = \
     "/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static"
 
+
 ############################ Helper Functions ##########################
+
+
 def dna_to_rna(seq):
     """(str) -> changed string
     simple function to replace all T with U
@@ -50,9 +53,6 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
     :type directorypath:
     :param devicenametosubobj:
     :type devicenametosubobj:
-    :param numberofsimulations: The total number of simulations to run for a
-        specific simulations.
-    :type numberofsimulations: int
     :param cores: number of cores a node will have (this is important for
         submission like things)
     :type cores: int
@@ -103,6 +103,7 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
         compressed_job_path = os.path.join(parmdirectory,
                                            'finaljob.final_compress.p')
         with open(compressed_job_path, 'wb') as tempfile:
+            # Not sure why this is a compressed job file
             pass
 
         # Make symbolic links for devices
@@ -185,6 +186,7 @@ def nodes_to_devivces(devicenametosubobj, nodes):
             #     node = nodes
     return outdict
 
+
 def mybundle_sub(directorypath, email, cores, nodes, walltime,
                  nameofexperiment, backfill=False, finaljob=False):
     """(str,num,num,str) -> .sh script for submission
@@ -250,6 +252,7 @@ def mybundle_sub(directorypath, email, cores, nodes, walltime,
         f.write("\nexit 0\n")
     os.chmod(pathtomybundle, 0777)
 
+
 def framework_shell(pathtoframework):
     """2013-12-16 16:02 WEV
     This will create all of the directories needed for the hyak
@@ -266,6 +269,7 @@ def framework_shell(pathtoframework):
     #     'completed-jobs'))
     return os.path.join(pathtoframework,
         'myscript-parms')
+
 
 def general_myscript_sub(directory, callfilecommand, callflags=''):
     """ -> .sh file for submission
@@ -304,6 +308,7 @@ def general_myscript_sub(directory, callfilecommand, callflags=''):
     #f.write("\ntouch $completed/$0\n")
     f.close()
     os.chmod(filepath, 0777)
+
 
 def myscript_sub_kinefold(parentdirectory):
     """ -> .sh file for submission

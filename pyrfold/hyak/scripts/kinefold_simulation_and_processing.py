@@ -33,7 +33,7 @@ if 'final_compress' in pickle_file_path:
                 'node' in ls]
 
     if len(nodelist) == 0:
-        # If there are no ondefiles - it is safe to compress everything
+        # If there are no nodefiles - it is safe to compress everything
         hyakp.compress_and_delete_directory(outputfilepath)
         hyakp.compress_and_delete_directory(timecoursepath)
         hyakp.compress_and_delete_directory(compresseddictpath)
@@ -57,19 +57,17 @@ else:
     SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
     # Now that we have the kinsuboj file we can do work on it
 
-
     # STEP 1 Write the dat file
-    dat_path = \
-        kinefold.write_dat_files(tempfilepath, [name], nametokinesubobj,
-                                 return_path=True)
+    dat_path = kinefold.write_dat_files(tempfilepath, [name], nametokinesubobj,
+                                        return_path=True)
 
     # STEP 2 make directory for all simulation data (in the output folder)
     rawdataoutput = os.path.join(outputfilepath, name)
     os.mkdir(rawdataoutput)
 
     # STEP 3 Make and run all require REQ files (in the output folder)
-    kinefold.write_req_files(tempfilepath, outputfilepath, tempfilepath, [name],
-                             nametokinesubobj, wrapper_run=False)
+    kinefold.write_req_files(tempfilepath, outputfilepath, tempfilepath,
+                             [name], nametokinesubobj, wrapper_run=False)
     kinefold.run_simulations(tempfilepath, name)
 
     # STEP 4 Delete all unneeded data (in the output folder and temp)
@@ -81,5 +79,3 @@ else:
 
     # STEP 6 Compress output/device data
     hyakp.compress_and_delete_directory(rawdataoutput)
-
-

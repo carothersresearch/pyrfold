@@ -11,47 +11,13 @@ easier to work with
 ############################ Modules ###################################
 ########################################################################
 import csv
-from  .foldingsub import FoldingSubData
+from .foldingsub import FoldingSubData
 import cPickle as pickle
 
 ########################################################################
 ############################   Read  ###################################
 ########################################################################
-def filled_in_form(filename, devicenametosubobj):
-    """()-> csv file to fill in
-    This should simply create an empty submission file for submission
-    dicty = {name: KineSubData class}
 
-    TODO URGENT this is not working for the current submission system
-    But it will work without forced data and parts
-    """
-    if '.csv' not in filename:
-        filename += '.csv'
-    with open(filename, 'wb') as f:
-        writer = csv.writer(f)
-        headers = ['sequence', 'name', 'window start',
-                   'window stop', 'numberofsimulations',
-                    'Polymerization Rate (nt/s)',
-                   'Folding time after elongation (s)',
-                   '1 renaturation 2 contrans',
-                   'psudoknots 0 no 1 yes',
-                   'entanglements 0 no 1 yes']
-                   #'sequence from experiment', 'size of sequence']
-                   #will try to incldue this information in a summary file
-        forcedlist = ['forced start', 'forced stop', 'forced size']
-        for i in range(3):
-            headers.extend(forcedlist)
-        headers.append('posrefpart')
-        headers.append('helix minimum free energy')
-        for i in range(5):
-            headers.append('part' + str(i+1))
-            headers.append('part start')
-            headers.append('part stop')
-           #writing headers
-        writer.writerow(headers)
-        for devicename in devicenametosubobj:
-            linetowrite = devicenametosubobj[devicename].generate_csv_line()
-            writer.writerow(linetowrite)
 
 def load_pickled_sub_summary(picklefilepath):
     """The inputfile contains data that is stored as a pickled data structure
@@ -59,10 +25,11 @@ def load_pickled_sub_summary(picklefilepath):
     information"""
     with open(picklefilepath, 'rb') as temppickle:
         outdict = pickle.load(temppickle)
-    #Make sure the additional data is generated
+    # Make sure the additional data is generated
     for device in outdict:
         outdict[device].scale_parts_to_window()
     return outdict
+
 
 def load_pickled_reference_sub(picklefilepath):
     """he inputfile contains data that is stored as a pickled data structure
@@ -71,6 +38,7 @@ def load_pickled_reference_sub(picklefilepath):
     with open(picklefilepath, 'rb') as temppickle:
         outdict = pickle.load(temppickle)
     return outdict
+
 
 def sub_file(inputfile, justexperimentalconditions=False):
     """ This will go through a submission file and create a dicitonary
@@ -81,7 +49,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
         # conditiondict = {}
         with open(inputfile, 'rU') as csvfile:
             reader = csv.reader(csvfile)
-            next(reader, None) # Skips the header
+            next(reader, None)  # Skips the header
             for row in reader:
                 if row:
                     # conditiondict['polrate'] = float(row[4])
@@ -100,6 +68,7 @@ def sub_file(inputfile, justexperimentalconditions=False):
                 outdict[tempsubdata.name] = tempsubdata
     return outdict
 
+
 def sub_summary(filename):
     """(filename)->dict(partname:window)
     this should open the subsummary file and extract all the needed
@@ -110,15 +79,15 @@ def sub_summary(filename):
     IE needs to be shifed to work properly with python
     """
     devicetoparts = {}
-    #open the .csv file
+    # open the .csv file
     with open(filename, 'rU') as csvfile:
         reader = csv.reader(csvfile)
-        next(reader, None) #Skips the header
+        next(reader, None)  # Skips the header
         for row in reader:
             templist = []
-            maxrange = len(row) - 1 #this is to avoid index errors
+            maxrange = len(row) - 1  # this is to avoid index errors
             for i in range(7, maxrange, 3):
-                if row[i]: #This looks through all of the possible parts
+                if row[i]:  # This looks through all of the possible parts
                     templist.append([row[i], int(row[i+1]), int(row[i+2])])
             devicetoparts[row[0]] = templist
     return devicetoparts
@@ -127,29 +96,45 @@ def sub_summary(filename):
 ############################   Write  ##################################
 ########################################################################
 
-def blank_form(filename):
+
+def filled_in_form(filename, devicenametosubobj):
     """()-> csv file to fill in
     This should simply create an empty submission file for submission
+    dicty = {name: KineSubData class}
+
+    TODO URGENT this is not working for the current submission system
+    But it will work without forced data and parts
     """
-    f = open(filename + '.csv', 'wb')
-    headers = ['sequence', 'name', 'window start',
+    if '.csv' not in filename:
+        filename += '.csv'
+    with open(filename, 'wb') as f:
+        writer = csv.writer(f)
+        headers = ['sequence', 'name', 'window start',
                    'window stop', 'numberofsimulations',
                    'Polymerization Rate (nt/s)',
                    'Folding time after elongation (s)',
                    '1 renaturation 2 contrans',
                    'psudoknots 0 no 1 yes',
-                   'entanglements 0 no 1 yes']
-               #'sequence from experiment', 'size of sequence']
-               #will try to incldue this information in a summary file
-    forcedlist = ['forced start', 'forced stop', 'forced size']
-    for i in range(3):
-        headers.extend(forcedlist)
-    for i in range(5):
-        headers.append('part' + str(i+1))
-        headers.append('part start')
-        headers.append('part stop')
-   #writing headers
-    for name in headers:
-        f.write(name + ',')
-    f.write('\n')
-    f.close()
+                   'entanglements 0 no 1 yes',
+                   'helix minimum free energy (Leave Blank IF Unsure)']
+        forcedlist = ['forced start', 'forced stop', 'forced size']
+        for i in range(3):
+            headers.extend(forcedlist)
+        headers.append('posrefpart')
+        headers.append()
+        for i in range(5):
+            headers.append('part' + str(i+1))
+            headers.append('part start')
+            headers.append('part stop')
+        # writing headers
+        writer.writerow(headers)
+        if devicenametosubobj is None:
+            pass
+        else:
+            for devicename in devicenametosubobj:
+                linetowrite = devicenametosubobj[devicename].generate_csv_line()
+                writer.writerow(linetowrite)
+
+
+def blank_form(filename):
+    filled_in_form(filename, devicenametosubobj=None)

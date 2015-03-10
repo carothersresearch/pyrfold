@@ -56,6 +56,26 @@ class Vienna(object):
         # self._close()
         return mfes
 
+    def pobabalistic_structures(self, number_of_structures,
+                                temp=37, index=None):
+        """This function employs subopt to sample a number of structures
+        in order to find some sort of probability that the structure
+        you want or don't want is actually present
+        """
+        if index is None:
+            tempseqs = self._seqs
+        else:
+            tempseqs = [self._seqs[index]]
+        ARGUMENT = ['RNAsubopt', '-T', str(temp),
+                    '-p', str(number_of_structures)]
+        for seq in tempseqs:
+            process = Popen(ARGUMENT, stdin=PIPE,
+                            stdout=PIPE, stderr=STDOUT)
+            stringtoinput = seq
+            output = process.communicate(input=stringtoinput)[0]
+            dotbrackets = output.splitlines()
+            return dotbrackets
+
     def mfe(self, temp=50.0, returnstructure=False, index=None,
             constraintstructure=False):
         '''Calculate the minimum free energy.
@@ -80,7 +100,7 @@ class Vienna(object):
                 tempconstaints = [self.constraintstructures[index]]
             for seq, const in zip(tempseqs, tempconstaints):
                 process = Popen(ARGUMENT, stdin=PIPE,
-                                stdout=PIPE, stderr=STDOUT)
+                                stdout=PIPE, stderr=STDOUT)#, cwd=self._tempdir)
                 stringtoinput = seq + '\n' + const
                 output = process.communicate(input=stringtoinput)[0]
                 lines = output.splitlines()
@@ -96,7 +116,7 @@ class Vienna(object):
             # self._check_tempdir()
             for seq in tempseqs:
                 process = Popen(ARGUMENT, stdin=PIPE,
-                                stdout=PIPE, stderr=STDOUT)
+                                stdout=PIPE, stderr=STDOUT)#, cwd=self._tempdir)
                 output = process.communicate(input=seq)[0]
                 lines = output.splitlines()
                 mfe = lines[-1].split('(')[-1].split(')')[0].strip()

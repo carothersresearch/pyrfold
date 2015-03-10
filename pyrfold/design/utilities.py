@@ -30,6 +30,21 @@ def random_RNA_sequence(size, GC_range=None):
             return ''.join(out)
 
 
+def random_DNA_sequence(size, GC_range=None):
+    """
+    Simple Random DNA generating random sequence generator
+    """
+    for i in range(10000):
+        out = []
+        for placecounter in range(size):
+            out.append(choice(['A', 'T', 'G', 'C']))
+        if GC_range:
+            if GC_range[0] <= GC_content(out) <= GC_range[1]:
+                return ''.join(out)
+        else:
+            return ''.join(out)
+
+
 def RNA_sequences_complementary(sequence1, sequence2):
     """Function to determine if two RNA sequences are complementary
     """

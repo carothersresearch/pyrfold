@@ -121,7 +121,6 @@ def filled_in_form(filename, devicenametosubobj):
         for i in range(3):
             headers.extend(forcedlist)
         headers.append('posrefpart')
-        headers.append()
         for i in range(5):
             headers.append('part' + str(i+1))
             headers.append('part start')

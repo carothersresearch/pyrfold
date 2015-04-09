@@ -55,8 +55,8 @@ class FoldingSubData(object):
                     partstartstoplist.append([int(listfromcsv[i+1]),
                                               int(listfromcsv[i+2])])
         forcedhelixes = []
-        if len(listfromcsv) > 11:
-            for index in range(10, 19, 3):
+        if len(listfromcsv) > 12:
+            for index in range(11, 20, 3):
                 if listfromcsv[index]:
                     forcedhelixes.append([int(listfromcsv[index]),
                                           int(listfromcsv[index + 1]),
@@ -80,7 +80,7 @@ class FoldingSubData(object):
                          partstartstoplist, partnamelist, positionrefpart,
                          forcedhelixes, polrate, foldtimeafter, experimenttype,
                          pseudoknots, entanglements, numberofsimulations,
-                         int(listfromcsv[10]))
+                         float(listfromcsv[10]))
         return output
 
     def generate_csv_line(self):

@@ -9,6 +9,12 @@ from . import fold
 from . import analyze
 from . foldingsub import FoldingSubData
 
+__version__ = "unknown"
+try:
+    from pyrfold._version import __version__
+except ImportError:
+    pass
+
 class AutoVivification(dict):
     """Implementation of perl's autovivification feature."""
     def __getitem__(self, item):
@@ -17,3 +23,4 @@ class AutoVivification(dict):
         except KeyError:
             value = self[item] = type(self)()
             return value
+

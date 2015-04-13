@@ -17,6 +17,7 @@ import errno
 import numpy as np
 import shutil
 
+
 def make_sure_path_exists(path):
     try:
         os.makedirs(path)
@@ -174,6 +175,7 @@ def finalstructure(processeddirectory, subsummarydict=None,
         pathtopickle = os.path.join(pathtofinalstructures, pick)
         with open(pathtopickle, 'wb') as topickle:
             pickle.dump(outpickdict, topickle, protocol=2)
+
 
 def create_finalpart_dict(timecoursedict, dictofparts=None):
     """helper function to final structure
@@ -335,6 +337,7 @@ def rescale_time_vectors(dictionaryofruns, timeline):
         #length of the sequence at first base addition
     return dictionaryofruns
 
+
 def rescale_time_vector(timelist, dotbracketlist, timeline):
     totalsize = len(timeline)
     sizeoftimelist = len(timelist)
@@ -371,6 +374,7 @@ def rescale_time_vector(timelist, dotbracketlist, timeline):
             break
     return np.around(timelist, decimals=1)
 
+
 def adjust_time_window(timelist, indexstart, indexstop, size, timeline):
     basetime = timeline[size - 1]
     #If there is only one step between no interpoliation is neccesary
@@ -384,6 +388,7 @@ def adjust_time_window(timelist, indexstart, indexstop, size, timeline):
     newstop = timeline[size]
     for index in range(indexstart + 1, indexstop):
         timelist[index] = adjust_time_point(timelist[index], ortinalstarttime, orginalstoptime, newstart, newstop)
+
 
 def adjust_time_point(orginaltime, orgstart, orgstop, newstart, newstop):
     """simple lever arm method to determine the new value of the time point
@@ -404,6 +409,8 @@ def adjust_time_point(orginaltime, orgstart, orgstop, newstart, newstop):
 # COMPRESS RUN DICTIONARY BLOCK START
 ###############################################################################
 ###############################################################################
+
+
 def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
     dotdict = OrderedDict()
     energydict = {}
@@ -450,9 +457,11 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
     outdict['baseadditiontime'] = baseadditiontime
     return outdict
 
+
 def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return array[idx]
+
 
 def normailize_orderddict_counters(ordereddict):
     """adding hacky removal of not used bases"""
@@ -463,6 +472,7 @@ def normailize_orderddict_counters(ordereddict):
         for item in ordereddict[time]:
             ordereddict[time][item] /= float(tempcount)
     return ordereddict
+
 
 def add_structure_timedictionary(ordereddict, structure, times, previousstart):
     """Previous start is to increase the efficency of this process"""
@@ -478,10 +488,12 @@ def add_structure_timedictionary(ordereddict, structure, times, previousstart):
     previousstart += index - 1
     return ordereddict, previousstart
 
+
 def add_energy_data(energydict, structure, energy):
     if structure not in energydict:
         energydict[structure] = energy
     return energydict
+
 
 def calculate_time_list(dictofruns, baseaddition):
     templist = []
@@ -521,12 +533,14 @@ def calculate_time_list(dictofruns, baseaddition):
 ########################################################################
 ################# Gen.  Destruction  ###################################
 ########################################################################
+
+
 def clean_up_output_data(experimentfolder, singlefile=False):
     """2014-01-08 17:12 WEV
     Removes all of the undesired files from the output of kinefold
     """
-    otherfilestodelete = ['*.rnms', '*.rnm2','*.e'
-                                    ,'*.p', '*.i']#, '*.rnm']
+    otherfilestodelete = ['*.rnms', '*.rnm2', '*.e',
+                          '*.p']  # , '*.i']  #, '*.rnm']
     if not singlefile:
         experimentfolder = os.path.join(experimentfolder, 'output')
         #change to this path
@@ -538,15 +552,25 @@ def clean_up_output_data(experimentfolder, singlefile=False):
         for filetype in otherfilestodelete:
             filetype = '*/' + filetype
             deletefileiterator = glob.iglob(os.path.join(experimentfolder,
-                                                filetype))
+                                                         filetype))
             for filename in deletefileiterator:
                 os.remove(filename)
     if singlefile:
         for filetype in otherfilestodelete:
             deletefileiterator = glob.iglob(os.path.join(experimentfolder,
-                                                filetype))
+                                                         filetype))
             for filename in deletefileiterator:
                 os.remove(filename)
+
+
+def delete_files_in_folder(directory, name_to_look_for):
+    """This function is delete all of the left over dat files from processing
+    """
+    files_to_delete = [os.path.join(directory, ls) for ls in os.listdir(directory)
+                       if name_to_look_for in ls]
+    for file_name in files_to_delete:
+        os.remove(file_name)
+
 
 def remove_all_node_files(exppath):
     """2013-12-19 12:21 WEV
@@ -563,6 +587,8 @@ def remove_all_node_files(exppath):
 ########################################################################
 ################# Compression        ###################################
 ########################################################################
+
+
 def compress_and_delete_directory(directorypath, tarpath='auto'):
     import tarfile
     import os

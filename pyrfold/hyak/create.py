@@ -6,25 +6,33 @@ import math
 import cPickle as pickle
 from ..fold.kinefold import write_dat_files as write_dat_files
 from ..fold.kinefold import write_req_files as write_req_files
-#import shutil
+# import shutil
+
+PATH_TO_KINEFOLD = \
+    "/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static"
+
 
 ############################ Helper Functions ##########################
+
+
 def dna_to_rna(seq):
     """(str) -> changed string
     simple function to replace all T with U
     """
     seq = seq.upper()
-    seq = seq.replace("T","U")
+    seq = seq.replace("T", "U")
     return seq
+
 
 def number_of_nodes(numberofsimulations, numberofexperiments):
     """(int, int) --> int
     This will calculate the number of nodes to use for a given experiment
     it takes ~4 hours for a 12 core node to do 5000 exp
     """
-    numberofthingspernode = 5000.0 #This is an educated guess
+    numberofthingspernode = 5000.0 # This is an educated guess
     totalnumberofthings = numberofsimulations * numberofexperiments
     return int(math.ceil(totalnumberofthings / numberofthingspernode))
+
 
 def new_directory(directory):
     """(str)->directory
@@ -33,18 +41,18 @@ def new_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+
 ############################ Core Functions   ##########################
+
 def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
-            email, backfill=True, nodes=1, finaljob=False):
+              email, processing_script_path, backfill=True, nodes=1,
+              finaljob=False):
     """ Builds a directory framework for the highthroughput processing
     of kinefold folding simulations.
     :param directorypath:
     :type directorypath:
     :param devicenametosubobj:
     :type devicenametosubobj:
-    :param numberofsimulations: The total number of simulations to run for a
-        specific simulations.
-    :type numberofsimulations: int
     :param cores: number of cores a node will have (this is important for
         submission like things)
     :type cores: int
@@ -55,38 +63,66 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
         will make an approximation for the nodes based on simulations requested
     :type nodes: int, str
     """
-    #First write the output framework
-    create_output_directory(directorypath, devicenametosubobj)
-    #Write the submission summary file:
+    # Create the output directory
+    outputdirectory = os.path.join(directorypath, 'output')
+    new_directory(outputdirectory)
+
+    processedoutputdirectory = os.path.join(directorypath, 'proc_output')
+    new_directory(processedoutputdirectory)
+    # Write the submission summary file:
     write_sub_summary(directorypath, devicenametosubobj)
-    #Need a sophisicated function to determine where jobs go
+    # Need a sophisicated function to determine where jobs go
     nodestodevices = nodes_to_devivces(devicenametosubobj, nodes)
-    #write all of the dat files (sequence files)
+    # write all of the dat files (sequence files)
     for node in nodestodevices:
         tempnodename = 'node-' + str(node)
         nodedirectory = os.path.join(directorypath, tempnodename)
-        #make the new directory
+        # make the new directory
         new_directory(nodedirectory)
-        datdirectory = os.path.join(nodedirectory, 'dat')
-        new_directory(datdirectory)
+        # Write the temp directory where all files will be created/destroyed
+        tempdirectory = os.path.join(nodedirectory, 'temp')
+        new_directory(tempdirectory)
+        # Write all of the important directories for other things
         parmdirectory = os.path.join(nodedirectory, 'myscript-parms')
         new_directory(parmdirectory)
         linkdirectory = os.path.join(nodedirectory, 'myscript-links')
         new_directory(linkdirectory)
+        # We'll write mybundlesub with a final job call for processing
         mybundle_sub(nodedirectory, email, cores, 1, '30:00:00',
-            nameofexperiment + '-' + tempnodename, backfill)
-        #write_MyScript.sh
-        myscript_sub_kinefold(nodedirectory)
-        #Write all of the dat files
-        write_dat_files(datdirectory, nodestodevices[node],
-                    devicenametosubobj)
-        #Write the req files that kinefold requires
-        outputdirectory = os.path.join(directorypath, 'output')
-        write_req_files(parmdirectory, outputdirectory, datdirectory,
-                                    nodestodevices[node], devicenametosubobj)
-        #Make symbolic links for devices
+                     nameofexperiment + '-' + tempnodename, backfill,
+                     finaljob=True)
+        # write_MyScript.sh
+        callcommand = 'python ' + processing_script_path
+        callflags = tempdirectory + ' ' + outputdirectory + ' ' + processedoutputdirectory
+
+        general_myscript_sub(nodedirectory, callcommand, callflags)
+        # Write the pickle files that are needed
+        write_pickled_job_files(parmdirectory, outputdirectory,
+                                nodestodevices[node], devicenametosubobj)
+        # write_compress_job_file
+        compressed_job_path = os.path.join(parmdirectory,
+                                           'finaljob.final_compress.p')
+        with open(compressed_job_path, 'wb') as tempfile:
+            # Not sure why this is a compressed job file
+            pass
+
+        # Make symbolic links for devices
         myscriptpath = os.path.join(nodedirectory, 'MyScript.sh')
-        symlinks(myscriptpath, parmdirectory, linkdirectory, '*.req')
+        symlinks(myscriptpath, parmdirectory, linkdirectory, '*.p')
+
+
+def write_pickled_job_files(parmdirectory, outputdirectory, devicestotest,
+                            alldevices):
+    """This will write individual pickle files for the all devices data that is
+    contained within it, as dictated by the devices list: devices to test"""
+    for testdevice in devicestotest:
+        thingtopickle = alldevices[testdevice]
+        # save with the
+        testdevice = 'job.' + testdevice + '.p'
+        testdevice = os.path.join(parmdirectory, testdevice)
+        with open(testdevice, 'wb') as topickle:
+            pickle.dump(thingtopickle, topickle)
+
 
 def write_sub_summary(directory, devicenametosubobj):
     """This will create a pickle structure for the devicenametosubobj
@@ -95,6 +131,7 @@ def write_sub_summary(directory, devicenametosubobj):
     pathtopicklefile = os.path.join(directory, 'sub_summary.p')
     with open(pathtopicklefile, 'wb') as picklefile:
         pickle.dump(devicenametosubobj, picklefile, protocol=2)
+
 
 def symlinks(exefilepath, filepath, linkdirectory, ext):
     """(str, str(path), str(path)) -> symlinks
@@ -109,11 +146,13 @@ def symlinks(exefilepath, filepath, linkdirectory, ext):
         fi = os.path.basename(fi)
         os.symlink(exefilepath, os.path.join(linkdirectory, fi))
 
+
 def create_output_directory(directorypath, devicenametosubobj):
     """Writes the framework for the output directory"""
     for devicename in devicenametosubobj:
         tempath = os.path.join(directorypath, 'output', devicename)
         new_directory(tempath)
+
 
 def nodes_to_devivces(devicenametosubobj, nodes):
     """Since the number of simulations done for every device is dicated now
@@ -123,17 +162,17 @@ def nodes_to_devivces(devicenametosubobj, nodes):
     TODO: Make sure that this is correct
     """
     outdict = {}
-    #calculate the total number of jobs
+    # calculate the total number of jobs
     numberofjobs = 0
     for device in devicenametosubobj:
         numberofjobs += devicenametosubobj[device].numberofsimulations
-    #Calculate the number of jobs to go per node
+    # Calculate the number of jobs to go per node
     if nodes == 'auto':
         nodes = 2
     jobspernode = math.ceil(numberofjobs/nodes)
     for node in range(nodes):
         outdict[node] = []
-    #Distribute the devices tot he dictionaries
+    # Distribute the devices tot he dictionaries
     countforasinglenode = 0
     node = 0
     for device in devicenametosubobj:
@@ -142,13 +181,14 @@ def nodes_to_devivces(devicenametosubobj, nodes):
         if countforasinglenode >= jobspernode:
             countforasinglenode = 0
             node += 1
-            #this is a sloppy way to make sure we don't intoduce to many nodes
+            # this is a sloppy way to make sure we don't intoduce to many nodes
             # if node > nodes:
             #     node = nodes
     return outdict
 
+
 def mybundle_sub(directorypath, email, cores, nodes, walltime,
-            nameofexperiment, backfill=False, finaljob=False):
+                 nameofexperiment, backfill=False, finaljob=False):
     """(str,num,num,str) -> .sh script for submission
     nameofexperiment <- reference for emails
     This script is needed for hyak checkpointing
@@ -212,6 +252,7 @@ def mybundle_sub(directorypath, email, cores, nodes, walltime,
         f.write("\nexit 0\n")
     os.chmod(pathtomybundle, 0777)
 
+
 def framework_shell(pathtoframework):
     """2013-12-16 16:02 WEV
     This will create all of the directories needed for the hyak
@@ -229,7 +270,8 @@ def framework_shell(pathtoframework):
     return os.path.join(pathtoframework,
         'myscript-parms')
 
-def general_myscript_sub(directory, callfilecommand):
+
+def general_myscript_sub(directory, callfilecommand, callflags=''):
     """ -> .sh file for submission
     The call file command should be a string of txt that oulines
     what exactly is being called and how it is being modife
@@ -259,13 +301,14 @@ def general_myscript_sub(directory, callfilecommand):
     #Checkpointing
     f.write("\nrm $outputdir/$0 2>/dev/null")
     # Do your work
-    f.write("\n" + callfilecommand + ' $ParmFile')
+    f.write("\n" + callfilecommand + ' $ParmFile ' + callflags)
     # We're done!
     # CHECKPOINTING: Create a semaphore to prevent this script instance
     # from rerunning if the job bundle is resubmitted
     #f.write("\ntouch $completed/$0\n")
     f.close()
     os.chmod(filepath, 0777)
+
 
 def myscript_sub_kinefold(parentdirectory):
     """ -> .sh file for submission
@@ -293,76 +336,13 @@ def myscript_sub_kinefold(parentdirectory):
         # $0 expands to the name of the shell of script being run
         f.write("\nParmFile=`echo $0 | cut -d / -f 2`")
         f.write("\nParmFile=$parmdir/$ParmFile")
-        #Checkpointing
-        #f.write("\nrm $outputdir/$0 2>/dev/null")
+        # Checkpointing
+        # f.write("\nrm $outputdir/$0 2>/dev/null")
         # Do your work
         f.write("\n/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static $ParmFile -noprint >/dev/null")
+        f.write("\nfile1=$(sed '2q;d' $ParmFile)")
+        f.write("\nfile2=$(sed '3q;d' $ParmFile)")
+        f.write("\nfile3=$(sed '5q;d' $ParmFile)")
+        f.write("\nfile4=$(sed '7q;d' $ParmFile)")
+        f.write("\nrm $file1 $file2 $file3 $file4")
     os.chmod(myscriptpath, 0777)
-
-# def write_req_files(parmdirectory, outputpath, datdirectory, listofdevices,
-#                                                         devicenametosubobj):
-#     """(str, int, tuple) -> write .req files for device
-#     This will write all of the neccessary req files for kinefold to process
-#     """
-#     random.seed() #uses system time to initialize random generator
-#     #EXPERIMENTAL VARIABLES
-#     for devicename in listofdevices:
-#         numberofsimulations = devicenametosubobj[devicename].numberofsimulations
-#         polrate, requestedtime = devicenametosubobj[devicename].kine_folding_data()
-#         psudoknots = devicenametosubobj[devicename].pseudoknots
-#         entanglements = devicenametosubobj[devicename].entanglements
-#         forcedhelixes = devicenametosubobj[devicename].forcedhelixes
-#         exptype = devicenametosubobj[devicename].experimenttype
-#         for i in range(numberofsimulations):
-#             #create name for req files and outputs
-#             reqname = str(i + 1).zfill(3) + devicename
-#             #open unique req file
-#             with open(os.path.join(parmdirectory, 'job.' + reqname
-#                                                         + '.req'), 'wb') as f:
-#                 #Write random number seed
-#                 f.write(str(int(round(random.random() * 10000))).zfill(4))
-#                 #Write all output directories
-#                 fileext = ['.p', '.e' , '.rnm', '.rnms', '.rnml', '.rnm2']
-#                 for ext in fileext:
-#                     f.write('\n')
-#                     f.write(os.path.join(outputpath, devicename, reqname + ext))
-#                 #Write .dat directory
-#                 f.write('\n' + os.path.join(datdirectory, devicename + '.dat'))
-#                 #Write 0 RNA 1 for DNA
-#                 f.write('\n' + str(0))
-#                 # helix minimum free energy in kcal/mol: 6.3460741=10kT
-#                 f.write('\n' + str(6.3460741))
-#                 #just something needed
-#                 f.write('\n' + str(10000000))
-#                 #requested folding time
-#                 f.write('\n' + str(requestedtime))
-#                 #psudoknots 1 = yes, 0 = no
-#                 f.write('\n' + str(int(psudoknots)))
-#                 #entanglements 1 = yes, 0 = no
-#                 f.write('\n' + str(int(entanglements)))
-#                 # simulation type: 1=renaturation; 2 20 =cotrans. @ 20msec/nt
-#                 if exptype == 2:
-#                     f.write('\n' + '2 ' + str(polrate))
-#                 else:
-#                     f.write('\n' + '1')
-#                 for forc in forcedhelixes:
-#                     f.write('\n' + 'F ' + str(forc[0]) + ' ' + str(forc[1]) +
-#                                                          ' ' + str(forc[2]))
-#                 #filename and filename.zip
-#                 f.write('\n' + devicename + '\n' + devicename + '.zip' + '\n')
-
-# def write_dat_files(datdirectory, listofdevices, devicenametosubobj):
-#     """This will fill in the tempnode/dat directory with the neccessary
-#     sequence information for processing"""
-#     for device in listofdevices:
-#         with open(os.path.join(datdirectory,(device + '.dat')), 'wb') as f:
-#             f.write("<" + device + '\n')
-#             #truncating device from tuple (seq,winStart,winStop)
-#             seq = devicenametosubobj[device].sequence
-#             start = devicenametosubobj[device].windowstart
-#             stop = devicenametosubobj[device].windowstop
-#             #accounting for shift in frame str[n:c] doesn't actually read
-#             #through to c it will stop at c-1
-#             seq = seq[start - 1: stop]
-#             seq = dna_to_rna(seq)
-#             f.write(seq + '\n')

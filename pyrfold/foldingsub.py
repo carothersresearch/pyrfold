@@ -4,35 +4,38 @@ class FoldingSubData(object):
     simulations as well.
     """
     def __init__(self, name, sequence, windowstart=0, windowstop=0,
-        partstartstoplist=[], partnamelist=[], referencepart=None,
-        forcedhelixes=[], polrate=30, foldtimeafter=1, experimenttype=2,
-        pseudoknots=0, entanglements=0, numberofsimulations=10):
-        #Name of the device
+                 partstartstoplist=[], partnamelist=[], referencepart=None,
+                 forcedhelixes=[], polrate=30, foldtimeafter=1,
+                 experimenttype=2, pseudoknots=0, entanglements=0,
+                 numberofsimulations=10, helix_min_free_eng=6.3460741):
+        # Name of the device
         self.name = name
-        #Total sequence of the submitted sequence
+        # Total sequence of the submitted sequence
         self.sequence = sequence
-        #Window start and stop with 1 indexing
+        # Window start and stop with 1 indexing
         self.windowstart = windowstart
         self.windowstop = windowstop
-        #Collectin of parts and their corresponding names
+        # Collectin of parts and their corresponding names
         self.partstartstoplist = partstartstoplist
         self.partnamelist = partnamelist
         self.positionrefpart = referencepart
-        #Defining fixed helix interactions for simulations
-        #[leftstart, rightstart, length]
+        # Defining fixed helix interactions for simulations
+        # [leftstart, rightstart, length]
         self.forcedhelixes = forcedhelixes
-        #Polymerization rate (nt/s) and foldtime after (s)
+        # Polymerization rate (nt/s) and foldtime after (s)
         self.polrate = polrate
         self.foldtimeafter = foldtimeafter
-        #Experiment type 2 = cotrans, 1 = renaturation
+        # Experiment type 2 = cotrans, 1 = renaturation
         self.experimenttype = experimenttype
-        #Controlling pseudoknots and entanglements for pseudoknots
+        # Controlling pseudoknots and entanglements for pseudoknots
         self.pseudoknots = pseudoknots
         self.entanglements = entanglements
-        #The number of simulations to be done for a specific part
+        # The number of simulations to be done for a specific part
         self.numberofsimulations = numberofsimulations
+        # The free energy of folding of the specific part
+        self.helixminfreeenergy = helix_min_free_eng
 
-    #A constructor of this class from a given entry in a sequence
+    # A constructor of this class from a given entry in a sequence
     @classmethod
     def from_csv_sub_file_line(cls, listfromcsv):
         """This class method is used to initialize this data from a csv file
@@ -45,20 +48,20 @@ class FoldingSubData(object):
         numberofsimulations = int(listfromcsv[4])
         partstartstoplist = []
         partnamelist = []
-        if len(listfromcsv) > 20:
-            for i in range(20, len(listfromcsv) - 1, 3):
+        if len(listfromcsv) > 21:
+            for i in range(21, len(listfromcsv) - 1, 3):
                 if listfromcsv[i]:
                     partnamelist.append(listfromcsv[i])
                     partstartstoplist.append([int(listfromcsv[i+1]),
                                               int(listfromcsv[i+2])])
         forcedhelixes = []
-        if len(listfromcsv) > 11:
-            for index in range(10, 19, 3):
+        if len(listfromcsv) > 12:
+            for index in range(11, 20, 3):
                 if listfromcsv[index]:
                     forcedhelixes.append([int(listfromcsv[index]),
                                           int(listfromcsv[index + 1]),
                                           int(listfromcsv[index + 2])])
-        positionrefpart = listfromcsv[19]
+        positionrefpart = listfromcsv[20]
         if not positionrefpart:
             positionrefpart = None
         polrate = float(listfromcsv[5])
@@ -66,10 +69,18 @@ class FoldingSubData(object):
         experimenttype = int(listfromcsv[7])
         pseudoknots = int(listfromcsv[8])
         entanglements = int(listfromcsv[9])
-        output = cls(name, sequence, windowstart, windowstop,
-                    partstartstoplist, partnamelist, positionrefpart,
-                    forcedhelixes, polrate, foldtimeafter, experimenttype,
-                    pseudoknots, entanglements, numberofsimulations)
+        # Check to see if there is a helix energy provided
+        if not listfromcsv[10]:
+            output = cls(name, sequence, windowstart, windowstop,
+                         partstartstoplist, partnamelist, positionrefpart,
+                         forcedhelixes, polrate, foldtimeafter, experimenttype,
+                         pseudoknots, entanglements, numberofsimulations)
+        else:
+            output = cls(name, sequence, windowstart, windowstop,
+                         partstartstoplist, partnamelist, positionrefpart,
+                         forcedhelixes, polrate, foldtimeafter, experimenttype,
+                         pseudoknots, entanglements, numberofsimulations,
+                         float(listfromcsv[10]))
         return output
 
     def generate_csv_line(self):
@@ -86,11 +97,12 @@ class FoldingSubData(object):
         outputlist.append(self.experimenttype)
         outputlist.append(self.pseudoknots)
         outputlist.append(self.entanglements)
+        outputlist.append(self.helixminfreeenergy)
         for i in range(3):
             if self.forcedhelixes and len(self.forcedhelixes) - 1 >= i:
                 outputlist.extend(self.forcedhelixes[i])
             else:
-                outputlist.extend(['','',''])
+                outputlist.extend(['', '', ''])
         if self.positionrefpart:
             outputlist.append(self.positionrefpart)
         else:
@@ -104,10 +116,10 @@ class FoldingSubData(object):
         "Kinefold requries total simulation time and pol rate in ms/nt"
         windowsize = self.windowstop - self.windowstart + 1
         if not self.polrate == 0:
-            rate = float(1)/self.polrate*1000 #ms/nt
+            rate = float(1)/self.polrate*1000  # ms/nt
         else:
             rate = 0.
-        requestedtime = rate*windowsize + self.foldtimeafter * 1000 #ms
+        requestedtime = rate*windowsize + self.foldtimeafter * 1000  # ms
         return rate, requestedtime
 
     def scale_parts_to_window(self):
@@ -130,11 +142,3 @@ class FoldingSubData(object):
             if part == partname:
                 return self.partstartstoplist[counter]
         print "Part " + partname + " not in partlist"
-
-
-
-
-
-
-
-

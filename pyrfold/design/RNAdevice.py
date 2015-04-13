@@ -170,8 +170,8 @@ class Unpaired():
     :param GC_range: The lower and upper bounds of GC fraction allowed
     :type GC_range: A list of two ints
     """
-    def __init__(self, sizerange, GC_range=None):
-        self.sequence = ''
+    def __init__(self, sizerange, sequence='', GC_range=None):
+        self.sequence = sequence
         self.size = None
         self.sizerange = sizerange
         self.gcrange = GC_range
@@ -226,7 +226,6 @@ def convert_to_RNA(sequence):
 def convert_to_DNA(sequence):
     sequence = str(sequence).upper()
     return sequence.replace('U', 'T')
-
 
 
 

@@ -53,14 +53,14 @@ COMPRESSPROCESSEDOUTPUT = 1
 #####Script does the Remainder of the work FOR YOU!!!!!!!!!!!!!!!!
 ROOT = os.getcwd()
 PROCESSINGSCRIPTNAME = 'delete_nodes_process_timecourse.py'
-NAMEOFPROCESSINGFOLDER = 'hyakprocessing' #all processing will be done this dir
+NAMEOFPROCESSINGFOLDER = 'hyakprocessing'  # all processing will be donethisdir
 PATHTOPROCESSINGSCRIPT = os.path.join(ROOT, 'pyrfold', 'hyak', 'scripts',
-                         PROCESSINGSCRIPTNAME)
+                                      PROCESSINGSCRIPTNAME)
 shutil.copy(PATHTOPROCESSINGSCRIPT, ROOT)
-NUMBEROFCORES = 16 #int(raw_input("Number of cores (8, 12, 16): "))
+NUMBEROFCORES = 16  # int(raw_input("Number of cores (8, 12, 16): "))
 NUMBEROFNODES = 1
 PATHTOPARMS = hyakcreate.framework_shell(os.path.join(ROOT,
-    NAMEOFPROCESSINGFOLDER))
+                                                      NAMEOFPROCESSINGFOLDER))
 
 #This assumes that the directory contains only node
 for directoryname in NAMEOFDIRECTORYLIST:

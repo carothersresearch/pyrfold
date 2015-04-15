@@ -7,6 +7,7 @@ from . import pyrfile
 from . import design
 from . import fold
 from . import analyze
+from . import utilities
 from . foldingsub import FoldingSubData
 
 __version__ = "unknown"

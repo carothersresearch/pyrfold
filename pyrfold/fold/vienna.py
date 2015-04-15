@@ -56,8 +56,8 @@ class Vienna(object):
         # self._close()
         return mfes
 
-    def pobabalistic_structures(self, number_of_structures,
-                                temp=37, index=None):
+    def pobabalistic_structures(self, temp=37, number_of_structures=1000,
+                                index=None):
         """This function employs subopt to sample a number of structures
         in order to find some sort of probability that the structure
         you want or don't want is actually present

@@ -7,11 +7,13 @@ v0.1.0
 pandas
 (From terminal)
 pip install pandas
+
+viennaRNA
 ```
 
 ## Turorials:
 ```
-TODO: 
+TODO:
 New tutorial notebook needs to be made
 ```
 
@@ -19,7 +21,7 @@ New tutorial notebook needs to be made
 (from the terminal)
 git clone https://github.com/carothersresearch/pyrfold.git
 
-## TODO 
+## TODO
 ```
 * Hyak Processing - print error output somewhere that isn't deleted
 * Hyaksubobj - make easier to construct parts in

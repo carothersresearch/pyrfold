@@ -15,6 +15,27 @@ DNA_complement_dict = {'A': 'T',
                        'C': 'G'}
 
 
+def index_of_sequence(sequence, sub_sequence):
+    """this function will look through the parts and identify the start
+    and stop location of the part if it exists in the part.
+    NOTE: This is 1 indeded
+    :param sequence: The full sequence to search
+    :type sequence: str
+    :param sub_sequence: The sub sequence to search for
+    :type sub_sequence: str
+    :returns: Start and stop index (1 indexed).
+    :rtype: list
+    """
+    #First convert the string to RNA
+    sequence = convert_to_RNA(sequence)
+    sub_sequence = convert_to_RNA(sub_sequence)
+    try:
+        lowindex = sequence.index(sub_sequence) + 1
+        highindex = lowindex - 1 + len(sub_sequence)
+    except ValueError:
+        return 'Target sequence is not in the complete sequence'
+    return [lowindex, highindex]
+
 def random_RNA_sequence(size, GC_range=None):
     """
     Simple Random RNA generating random sequence generator

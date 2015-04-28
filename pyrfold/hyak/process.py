@@ -534,7 +534,7 @@ def calculate_time_list(dictofruns, baseaddition, simulation_type):
     previousstep = -0.1
     for time in templist:
         if time > previousstep:
-            outlist.append(time)\
+            outlist.append(time)
             previousstep = time
     return np.array(outlist)
 

@@ -3,7 +3,7 @@ This module should aide in the design of RNAdevices for the design of
 RNAparts and devices.
 """
 from random import choice
-from .utilities import GC_content, reverse_complement, convert_to_RNA, \
+from ..utilities import GC_content, reverse_complement, convert_to_RNA, \
     convert_to_DNA, RNA_sequences_complementary, randomly_substitue_u_for_c, \
     random_RNA_sequence
 
@@ -132,18 +132,3 @@ def generate_half_helix(sequence, strand=0, randomly_sub_u_for_c=False):
         return Helix(rev_comp, sequence)
 
 
-
-
-
-def generate_docking_site(site_size=20):
-    for i in range(10000):  # long counter tfind a sequence that works
-        out = []
-        # First base biased to be a G or C
-        first_base = choice(['G', 'C', 'G', 'C', 'G', 'C', 'A', 'U'])
-        out.append(first_base)
-        for count in range(site_size - 1):
-            out.append(choice(['A', 'U', 'G', 'C']))
-        out = ''.join(out)
-        # Make sure that the sequence content makes sense
-        if 0.35 <= GC_content(out) <= 0.5:
-            return ''.join(out)

@@ -56,8 +56,8 @@ class Vienna(object):
         # self._close()
         return mfes
 
-    def pobabalistic_structures(self, number_of_structures,
-                                temp=37, index=None):
+    def pobabalistic_structures(self, temp=37, number_of_structures=1000,
+                                index=None):
         """This function employs subopt to sample a number of structures
         in order to find some sort of probability that the structure
         you want or don't want is actually present
@@ -76,7 +76,7 @@ class Vienna(object):
             dotbrackets = output.splitlines()
             return dotbrackets
 
-    def mfe(self, temp=50.0, returnstructure=False, index=None,
+    def mfe(self, temp=37, returnstructure=False, index=None,
             constraintstructure=False):
         '''Calculate the minimum free energy.
         :param temp: Temperature at which to run calculations.
@@ -128,7 +128,7 @@ class Vienna(object):
             return zip(mfes, dotbrackets)
         return mfes
 
-    def pairs(self, temp=50.0, index=None):
+    def pairs(self, temp=37, index=None):
         '''Calculate per-pair probability of being unbound (secondary
         structure).
         :param temp: Temperature at which to run calculations.

@@ -57,7 +57,8 @@ class RNAdevice(object):
         self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
 
-class RNApart():
+
+class RNApart(object):
     """Basic class for the design of these parts"""
     def __init__(self, partlist, sequencelist):
         self.partlist = partlist
@@ -110,7 +111,7 @@ class RNApart():
         self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
 
-class RNAsequence():
+class RNAsequence(object):
     def __init__(self, sequence):
         self.sequence = convert_to_RNA(sequence)
 
@@ -126,7 +127,7 @@ class RNAsequence():
     def __str__(self):
         return self.sequence
 
-class Helix():
+class Helix(object):
     """This class will simply keep track of two sides of helix and
     autoamtically generate one half based on the other half
     """
@@ -162,7 +163,7 @@ class Helix():
         self.helixes[0] = random_sequence(self.size)
         self.generate_helix(self, randomly_substitue_u_for_c=False)
 
-class Unpaired():
+class Unpaired(object):
     """This class will have the basic functionality of making unpaired
     sequences specifically with random generation in mind
     :param sizerange: The lower and upper bound of size of a given sequence

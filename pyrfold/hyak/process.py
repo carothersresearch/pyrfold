@@ -123,11 +123,12 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
             polrate = np.round(polrate, 1)
         else:
             polrate = None
-        temprundict, baseadditiontime, completesequence = \
+        temprundict, baseadditiontime, completesequence, simulation_type = \
             consolidate_run_dictionary(dicttopickle, polrate=polrate)
         compresseddict = compress_run_dictionary(temprundict,
                                                  baseadditiontime,
-                                                 completesequence)
+                                                 completesequence,
+                                                 simulation_type)
         temppickledest = os.path.join(COMPRESSEDTIMEDIR, directoryname + '.p')
         if return_dictionary:
             return dicttopickle, compresseddict
@@ -242,15 +243,16 @@ def consolidate_run_dictionary(rundictionary, polrate=None):
     :param rundictionary: Dictionary that hyak processing produces
     """
     #First calcualte the pol rate and base timeline
-    timebofbaseadition, timeline, sequence = calculate_pol_rate(rundictionary,
+    timebofbaseadition, timeline, sequence, simulation_type = calculate_pol_rate(rundictionary,
                                                         polrate)
     #we do this because we want all of the structural shifts to be discrete
     rundictionary = change_duplicate_time_points(rundictionary)
     #Rescale all of the time vectors in the rundictionary to align with timelin
-    rundictionary = rescale_time_vectors(rundictionary, timeline)
-    rundictionary = change_duplicate_time_points(rundictionary)
+    if simulation_type == 'cotrans':
+        rundictionary = rescale_time_vectors(rundictionary, timeline)
+        rundictionary = change_duplicate_time_points(rundictionary)
     #Do a final polishing step to make sure that there are not duplicate time points
-    return rundictionary, timebofbaseadition, sequence
+    return rundictionary, timebofbaseadition, sequence, simulation_type
 
 
 def change_duplicate_time_points(dictionaryofruns):
@@ -259,7 +261,7 @@ def change_duplicate_time_points(dictionaryofruns):
     identical"""
     for runnumber in dictionaryofruns:
         timelist = dictionaryofruns[runnumber]['time']
-        previoustime = 0
+        previoustime = -0.1
         for index, time in enumerate(timelist):
             currenttime = time
             if previoustime == currenttime:
@@ -281,6 +283,8 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     :return timeline: Timeline of base addition. EVery time point a base was added
     :return timeofbaseaddition: list
     """
+    simulation_type = 'cotrans'
+
     if polrate is not None:
         timeofbaseaddition = np.round(polrate, 1)
         for runnumber in dictionaryofruns:
@@ -292,6 +296,12 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
         #Polymerization rate
         #print dictionaryofruns
         for runnumber in dictionaryofruns:
+            #Check to see if the simulation is meltanneal
+            if dictionaryofruns[runnumber]['type'] == 'meltanneal':
+                simulation_type = 'meltanneal'
+                sequence = dictionaryofruns[runnumber]['sequence']
+                polrate = None
+                break
             tempbaseadditionlist = []
             dotbracketlist = dictionaryofruns[runnumber]['dotbracket']
             timelist = dictionaryofruns[runnumber]['time']
@@ -318,10 +328,14 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
                     break
         timeofbaseaddition = np.round(np.mean(timeofbaseaddition), 1)
         #Make the timeline
-    timeline = []
-    for basecount in range(len(sequence)):
-        timeline.append(basecount * timeofbaseaddition)
-    return timeofbaseaddition, timeline, sequence
+
+    if simulation_type == 'cotrans':
+        timeline = []
+        for basecount in range(len(sequence)):
+            timeline.append(basecount * timeofbaseaddition)
+    else:
+        timeline = None
+    return timeofbaseaddition, timeline, sequence, simulation_type
 
 
 def rescale_time_vectors(dictionaryofruns, timeline):
@@ -411,10 +425,12 @@ def adjust_time_point(orginaltime, orgstart, orgstop, newstart, newstop):
 ###############################################################################
 
 
-def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
+def compress_run_dictionary(rundictionary, baseadditiontime, completesequence,
+                            simulation_type):
     dotdict = OrderedDict()
     energydict = {}
-    timearray = calculate_time_list(rundictionary, baseadditiontime)
+    timearray = calculate_time_list(rundictionary, baseadditiontime,
+                                    simulation_type)
     #Initialize the dictionary
     for time in timearray:
         dotdict[time] = Counter()
@@ -426,16 +442,19 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence):
         #add unstructured sequences structures where appropriate
         mintime = temptimelist[0]
         # numberofsinglebasestoadd = int(mintime/baseadditiontime)
-        numberofsinglebasestoadd = len(rundictionary[runnumber]['dotbracket'][0])
         previousbasecountindex = 0
-        for basecount in range(numberofsinglebasestoadd):
-            temptime1 = find_nearest(timearray, basecount * baseadditiontime)
-            temptime2 = find_nearest(timearray,
-                                    (basecount + 1) * baseadditiontime)
-            structure = '.'*(basecount + 1)
-            dotdict, previousbasecountindex = add_structure_timedictionary(dotdict, structure,
-                        [temptime1, temptime2], previousbasecountindex)
-            add_energy_data(energydict, structure, energy=0)
+        if simulation_type == 'cotrans':
+            numberofsinglebasestoadd = len(rundictionary[runnumber]['dotbracket'][0])
+
+            for basecount in range(numberofsinglebasestoadd):
+                temptime1 = find_nearest(timearray, basecount * baseadditiontime)
+                temptime2 = find_nearest(timearray,
+                                        (basecount + 1) * baseadditiontime)
+                structure = '.'*(basecount + 1)
+                dotdict, previousbasecountindex = add_structure_timedictionary(dotdict, structure,
+                            [temptime1, temptime2], previousbasecountindex)
+                add_energy_data(energydict, structure, energy=0)
+
         #print 'initial stuff added'
         #add all of the other structures
         for counter, time in enumerate(temptimelist):
@@ -495,7 +514,7 @@ def add_energy_data(energydict, structure, energy):
     return energydict
 
 
-def calculate_time_list(dictofruns, baseaddition):
+def calculate_time_list(dictofruns, baseaddition, simulation_type):
     templist = []
     for run in dictofruns:
         templist.extend(dictofruns[run]['time'])
@@ -507,19 +526,14 @@ def calculate_time_list(dictofruns, baseaddition):
     maxtime = max(templist)
     mintime = min(templist)
     #Add timesteps for initial bass addition
-    timepointstoadd = np.arange(0, mintime, baseaddition)
-    outlist = list(timepointstoadd)
-    previousstep = 0
+    if simulation_type == 'cotrans':
+        timepointstoadd = np.arange(0, mintime, baseaddition)
+        outlist = list(timepointstoadd)
+    else:
+        outlist = []
+    previousstep = -0.1
     for time in templist:
-        # if time > previousstep + minstep:
-        #     #print 'this happened'
-        #     while time > previousstep + minstep:
-        #         previousstep += minstep
-        #         outlist.append(previousstep)
-        #     outlist.append(time)
-        #     previousstep = time
         if time > previousstep:
-            #outlist.append(time - 0.005)
             outlist.append(time)
             previousstep = time
     return np.array(outlist)

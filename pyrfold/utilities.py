@@ -15,6 +15,27 @@ DNA_complement_dict = {'A': 'T',
                        'C': 'G'}
 
 
+def index_of_sequence(sequence, sub_sequence):
+    """this function will look through the parts and identify the start
+    and stop location of the part if it exists in the part.
+    NOTE: This is 1 indeded
+    :param sequence: The full sequence to search
+    :type sequence: str
+    :param sub_sequence: The sub sequence to search for
+    :type sub_sequence: str
+    :returns: Start and stop index (1 indexed).
+    :rtype: list
+    """
+    #First convert the string to RNA
+    sequence = convert_to_RNA(sequence)
+    sub_sequence = convert_to_RNA(sub_sequence)
+    try:
+        lowindex = sequence.index(sub_sequence) + 1
+        highindex = lowindex - 1 + len(sub_sequence)
+    except ValueError:
+        return 'Target sequence is not in the complete sequence'
+    return [lowindex, highindex]
+
 def random_RNA_sequence(size, GC_range=None):
     """
     Simple Random RNA generating random sequence generator
@@ -46,7 +67,8 @@ def random_DNA_sequence(size, GC_range=None):
 
 
 def RNA_sequences_complementary(sequence1, sequence2):
-    """Function to determine if two RNA sequences are complementary
+    """
+    Function to determine if two RNA sequences are complementary
     """
     # Make sure the sequences are RNA
     sequence1 = convert_to_RNA(sequence1)
@@ -88,17 +110,37 @@ def convert_to_RNA(sequence):
 
 
 def convert_to_DNA(sequence):
+    """
+    Converts RNA to DNA
+    """
     sequence = str(sequence).upper()
     return sequence.replace('U', 'T')
 
 
-def reverse_complement(sequence):
-    sequence = convert_to_RNA(sequence)
-    tempseq = sequence.replace('A', 'x')
-    tempseq = tempseq.replace('U', 'A')
-    tempseq = tempseq.replace('x', 'U')
-    tempseq = tempseq.replace('G', 'x')
-    tempseq = tempseq.replace('C', 'G')
-    tempseq = tempseq.replace('x', 'C')
-    sequence = tempseq[::-1]
+def reverse_complement(sequence, strand_type='RNA'):
+    """ This block simply creates the reverse complement of a strand of either
+    DNA or RNA
+    :param sequence: The sequence of DNA/RNA to be reversed
+    :type sequence: str
+    :param strand_type: The specific strand type that is being used
+    :type strand_type: str
+    """
+    if strand_type == 'RNA':
+        sequence = convert_to_RNA(sequence)
+        tempseq = sequence.replace('A', 'x')
+        tempseq = tempseq.replace('U', 'A')
+        tempseq = tempseq.replace('x', 'U')
+        tempseq = tempseq.replace('G', 'x')
+        tempseq = tempseq.replace('C', 'G')
+        tempseq = tempseq.replace('x', 'C')
+        sequence = tempseq[::-1]
+    if strand_type == 'DNA':
+        sequence = convert_to_DNA(sequence)
+        tempseq = sequence.replace('A', 'x')
+        tempseq = tempseq.replace('T', 'A')
+        tempseq = tempseq.replace('x', 'T')
+        tempseq = tempseq.replace('G', 'x')
+        tempseq = tempseq.replace('C', 'G')
+        tempseq = tempseq.replace('x', 'C')
+        sequence = tempseq[::-1]
     return sequence

@@ -125,6 +125,6 @@ def list_of_dominant_sampled_structures(sequence, num_structures_to_generate,
                                                    returnfreq=True)
     return_list = []
     for key in dict_of_structures:
-        if dict_of_structures[key] > 0.01:
+        if dict_of_structures[key] > threshold:
             return_list.append(key)
     return return_list

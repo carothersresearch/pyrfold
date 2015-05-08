@@ -89,11 +89,12 @@ class TimeCourseStructure(object):
         """
         from ..hyak import process as hyakp
 
-        temprundict, baseadditiontime, completesequence = \
+        temprundict, baseadditiontime, completesequence, simulation_type = \
                             hyakp.consolidate_run_dictionary(dictionaryofruns)
         #This step is time intensive and needs to be optimized
         dictionary = hyakp.compress_run_dictionary(temprundict,
-                                  baseadditiontime, completesequence)
+                                  baseadditiontime, completesequence,
+                                  simulation_type)
         #A list of structures that have been found thus far and their max
         #frequency
         output = cls(dictionary, structurewindow, timewindow, rescale,

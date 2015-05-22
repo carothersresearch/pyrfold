@@ -157,10 +157,14 @@ def write_req_files(parmdirectory, outputpath, datdirectory, listofdevices,
 
 def run_simulations(path_to_req_files, name_of_device):
         # confirm that there is a temp directory to write the files to
-        list_of_req_files = [os.path.join(path_to_req_files, fi) for
-                             fi in os.listdir(path_to_req_files)
-                             if (os.path.isfile(os.path.join(path_to_req_files, fi))
-                                 and name_of_device in fi and '.req' in fi)]
+        list_of_req_files = []
+        for filename in os.listdir(path_to_req_files):
+            if '.req' not in filename:
+                continue
+            if filename.split('.req')[0].split('job.')[1][3:] == name_of_device:
+                file_to_add = os.path.join(path_to_req_files, filename)
+                list_of_req_files.append(file_to_add)
+
         for reqfile in list_of_req_files:
             subprocess.call([path_to_kinefold, reqfile, '-noprint'],
                             stdout=devnull, stderr=devnull)

@@ -72,7 +72,7 @@ else:
 
     # STEP 4 Delete all unneeded data (in the output folder and temp)
     hyakp.clean_up_output_data(rawdataoutput, singlefile=True)
-    hyakp.delete_files_in_folder(tempfilepath, name)
+    # hyakp.delete_files_in_folder(tempfilepath, name)
 
     # STEP 5 Process the data to create (Transfer to proc_output)
     hyakp.timecourse(rawdataoutput, processoutputpath, singledirectory=True)

@@ -88,7 +88,7 @@ def framework(directorypath, devicenametosubobj, cores, nameofexperiment,
         linkdirectory = os.path.join(nodedirectory, 'myscript-links')
         new_directory(linkdirectory)
         # We'll write mybundlesub with a final job call for processing
-        mybundle_sub(nodedirectory, email, cores, 1, '200:00:00',
+        mybundle_sub(nodedirectory, email, cores, 1, '336:00:00',
                      nameofexperiment + '-' + tempnodename, backfill,
                      finaljob=True)
         # write_MyScript.sh

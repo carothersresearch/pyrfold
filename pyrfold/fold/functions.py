@@ -20,9 +20,11 @@ def structure_seen_in_mfe(sequence, mfe_structures, region=None, temp=37):
     """
     temp_vienna = Vienna([sequence])
     structure = temp_vienna.mfe(temp=temp, returnstructure=True)[0][1]
-    if region != None:
+    if region is not None:
         structure = structure[region[0]-1: region[1]]
         size = len(structure)
+    else:
+        size = len(sequence)
     for mfe_structure in mfe_structures:
         if len(mfe_structure) > size:
             raise Exception('MFE_structure larger than region')
@@ -56,9 +58,11 @@ def freq_of_structures_appearing(sequence, list_of_target_structures,
     number_present = 0
 
     for dotbracket in tofold.pobabalistic_structures(temp, num):
-        if region != None:
+        if region is not None:
             dotbracket = dotbracket[region[0]-1: region[1]]
             size = len(dotbracket)
+        else:
+            size = len(sequence)
         for target_structure in list_of_target_structures:
             if len(target_structure) > size:
                 raise Exception('target_structure larger than region')

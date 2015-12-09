@@ -4,6 +4,10 @@ from tempfile import mkdtemp
 from os.path import isdir
 from shutil import rmtree
 
+# Find the version of vienna that is installed on this machine
+process = Popen(['RNAfold', '--version'], stdout=PIPE)
+__version__ = process.communicate()[0].split('\n')[0].split()[1]
+
 
 class Vienna(object):
     '''Run Vienna RNA functions on a sequence.'''

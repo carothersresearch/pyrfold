@@ -5,8 +5,15 @@ from os.path import isdir
 from shutil import rmtree
 
 # Find the version of vienna that is installed on this machine
-process = Popen(['RNAfold', '--version'], stdout=PIPE)
-__version__ = process.communicate()[0].split('\n')[0].split()[1]
+
+
+def version():
+    """
+    basic function to get the version of vienna that is available on your
+    machine
+    """
+    process = Popen(['RNAfold', '--version'], stdout=PIPE)
+    return process.communicate()[0].split('\n')[0].split()[1]
 
 
 class Vienna(object):

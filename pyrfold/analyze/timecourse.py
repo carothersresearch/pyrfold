@@ -103,8 +103,26 @@ class TimeCourseStructure(object):
 
 
     def generate_data(self, structurewindow, timewindow=None, cutoff=0.0,
-                        rescale=False, maxlength=None, firstexposure=False):
-
+                      maxlength=None, firstexposure=True):
+        """ This function will condense the run dictionary information into a
+        pandas dataframe that is windowed by the specified bounds.
+        :param structurewindow: The start and stop location of structure (1
+            indexed)
+        :type structurewindow: (int, int)
+        :param timewindow: The timewindow of the simulation to consider when
+            generating the data
+        :type timewindow: (float, float)
+        :param cutoff: The minimum frequency a structure must have to be
+            considered
+        :type cutoff: float
+        :param maxlength:
+        :type maxlength:
+        :param firstexposure: Should the dataframe start after the first base
+            has been exposed?
+        :type firstexposure: bool
+        :returns: Populates the structure dataframe of the object
+        :rtype: None
+        """
         self.structurewindow = structurewindow
         self.timewindow = timewindow
         if maxlength:
@@ -112,30 +130,10 @@ class TimeCourseStructure(object):
                                         self.dictionary, self.timewindow)
         self.structuredataframe = \
                 structure_evaluation(self.dictionary, self.structurewindow,
-                               self.timewindow, cutoff, rescale, firstexposure)
+                               self.timewindow, cutoff, firstexposure)
         self.sequence = self.completesequence[
                       self.structurewindow[0] - 1: self.structurewindow[1]]
 
-    def __repr__(self):
-        #Crude Sorting system
-        sortlist = []
-        for structure in self.structures:
-            sortlist.append([self.structures[structure][0], structure])
-        sortlist.sort()
-        output = ''
-        output += '======================================================'
-        output += '\n'
-        output += self.sequence + '   ' + 'Time (ms)' + '   ' + 'Max Freq'
-        for structure in sortlist:
-            output += '\n'
-            structure = structure[1]
-            linetoprint = structure
-            linetoprint += '   '
-            linetoprint += str(self.structures[structure][0]).zfill(8)
-            linetoprint += '         '
-            linetoprint += str(self.structures[structure][1])
-            output += linetoprint
-        return output
 
     def find_sequence_index(self, sequence):
         """this function will look through the parts and identify the start
@@ -162,7 +160,7 @@ class TimeCourseStructure(object):
         popt = [maxvalue, rate]
         pcov an array of the variance of these values
         """
-        #First consolidate all of the structures
+        # First consolidate all of the structures
         timearray = np.array(self.structuredataframe.index.tolist())
         timearray = timearray - min(timearray)
         structurearray = np.zeros(len(timearray))
@@ -170,22 +168,59 @@ class TimeCourseStructure(object):
             structurearray += self.structuredataframe[structure].values
         # timearray = timearray[:1000]
         # structurearray = structurearray[:1000]
-        #shift = self.baseadditiontime * self.structurewindow[1]
-        popt, pcov = curve_fit(rate_of_folding_func, timearray, structurearray,
-            p0=[0.5, 0.0001])
+        # shift = self.baseadditiontime * self.structurewindow[1]
+        popt, pcov = curve_fit(rate_of_folding_func, timearray,
+                               structurearray, p0=[0.5, 0.0001])
         # popt, pcov = curve_fit(
         #                        lambda t, maxvalue, rate: rate_of_folding_func(
         #                                              t, shift, maxvalue, rate),
-                               # temptime, freq)
+        # temptime, freq)
         return popt, pcov
+
+    def maxium_frequency_of_structures(self, structurelist):
+        """
+        This function searches the populated structuredataframe for all of the
+        structures that are requested. Right now this requires that you have
+        generated a dataframe with the appropriate window
+        :param structurelist: list of all of the structures to be considered
+        :type structurelist: list of str
+        :return: Maximum frequency of a combined set of structures appearing
+        :rtype: float
+        """
+        structurearray = np.zeros(self.structuredataframe.shape[0])
+        for structure in structurelist:
+            try:
+                structurearray += self.structuredataframe[structure].values
+            except KeyError:
+                pass
+        return structurearray.max()
+
+    def maximum_final_frequency_of_structures(self, structurelist):
+        """
+        This function searches the populated structuredataframe for all of the
+        structures that are requested and then returns the final frequency
+        of the collection of structures
+        :param structurelist: list of all of the structures to be considered
+        :type structurelist: list of str
+        :return: Maximum frequency of a combined set of structures appearing
+        :rtype: float
+        """
+        return_frequency = 0.
+        for structure, frequency in self.structuredataframe.iloc[-1].iteritems():
+            if structure in structurelist:
+                return_frequency += frequency
+        return return_frequency
 
     def final_structures_seen(self, structurewindow, cutoff=0.0):
         """Generates data for the specific window and then returns the windowed
         structures for the devices
-
-
+        :param structurewindow:
+        :type structurewindow:
+        :param cutoff: The maximum frequency of structure to be considered
+        :type cutoff: float
+        :returns: List of final dotbracket structures seen
+        :rtype: list
         """
-
         return_list = []
         self.generate_data(structurewindow,  cutoff=cutoff,
                            firstexposure=True)
@@ -194,11 +229,33 @@ class TimeCourseStructure(object):
                 return_list.append(structure)
         return return_list
 
+    def __repr__(self):
+        # Crude Sorting system
+        sortlist = []
+        for structure in self.structures:
+            sortlist.append([self.structures[structure][0], structure])
+        sortlist.sort()
+        output = ''
+        output += '======================================================'
+        output += '\n'
+        output += self.sequence + '   ' + 'Time (ms)' + '   ' + 'Max Freq'
+        for structure in sortlist:
+            output += '\n'
+            structure = structure[1]
+            linetoprint = structure
+            linetoprint += '   '
+            linetoprint += str(self.structures[structure][0]).zfill(8)
+            linetoprint += '         '
+            linetoprint += str(self.structures[structure][1])
+            output += linetoprint
+        return output
+
 def rate_of_folding_func(t, maxvalue, rate):
     return maxvalue*(1 - np.exp(-rate*(t)))
 
 def calcuate_time_vector_for_structures(compresseddict, timewindow,
-                   firstexposure = False, windowstartstop = None):
+                                        firstexposure=False,
+                                        windowstartstop=None):
     mintime, maxtime = timewindow
     if windowstartstop:
         lengthofsequence = windowstartstop[1]
@@ -235,30 +292,28 @@ def calculate_indexs_from_time(dictionaryofruns, timewindow):
 
 
 def structure_evaluation(dictionaryofruns, structurewindow, timewindow=None,
-                         cutoff=0., rescale=False, firstexposure=False):
+                         cutoff=0., firstexposure=False):
     """
     :param dictionaryofruns: This is the standard dictionary that is output by
         Kinefold runnumber:['dotbracket', etc, etc,]:list
     :type dictionaryofruns: Dictionary
     :param structurewindow: The start and stop positions of the dotbrackets to
         mine over time (1 indexed)
-    :type inddexestomine: list of lists of ints
-        NOTE: This is currently broken and only supports a single index
     :param timewindow: If used this outlines the timepoints of interest
     :type timewindow: list of lists of floats
     :param cutoff: This is a way to remove not common structures - anystructure
         which doesn't appear more than the cutoff is removed from the output
     :type cutoff: float
     """
-    #Probably best to have this set up as a dictionary output?
+    # Probably best to have this set up as a dictionary output?
     if timewindow:
         mintime, maxtime = timewindow
     else:
         mintime = 0
-        #Grab the max time of the run
+        # Grab the max time of the run
         maxtime = dictionaryofruns['dotbracket'].keys()[-1]
     timevector = calcuate_time_vector_for_structures(dictionaryofruns, [mintime, maxtime], firstexposure, structurewindow)
-    #Now create structure dicitonary and populate it
+    # Now create structure dicitonary and populate it
     structuredataframe = pandas.DataFrame(timevector, columns=['time'])
     structuredataframe = structuredataframe.set_index('time')
     timesize = len(timevector)
@@ -270,7 +325,8 @@ def structure_evaluation(dictionaryofruns, structurewindow, timewindow=None,
             break
     return structuredataframe.fillna(0)
 
-def add_structure_data(counterofstructures, structurewindow, structuredataframe, timepoint, sizeoftimevector):
+def add_structure_data(counterofstructures, structurewindow,
+                       structuredataframe, timepoint, sizeoftimevector):
     tempstrudict = Counter()
     for structure in counterofstructures:
         if len(structure) < structurewindow[1]:

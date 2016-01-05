@@ -106,6 +106,60 @@ def dic_of_sampled_structures(sequence, num_structures_to_generate,
             returndict[key]= returndict[key]/total
     return returndict
 
+def list_of_structures_to_define_fraction_of_ensemble(sequence,
+                                                      num_structures_to_generate,
+                                                      frequency=0.9,
+                                                      region=None,
+                                                      temp=37):
+    """
+    Function is very similar to "list_of_dominant_sampled_structures" but here
+    all of the structures are generated and then only the structures that are
+    are dominant to get to a fraction of ensemble structure.
+
+    This is a poor man's stand in for the real ensemble comparison that should
+    happen.
+
+    :param sequence: sequence of RNA to be sampled from
+    :type sequence: str
+    :param num_structures_to_generate: Number of structures to sample. Sample
+        large numbers for this (>>1000)
+    :param region: The index of a subpart to look for (1 indexed)
+    :param frequency: The minimum total structure frequency that that the
+        list of possible structures sum to.
+    :type frequency: float
+    :param region: This is the region (start, stop) of the sequence to look at,
+         1 indexed.
+    :type region: list
+    :type num_structures_to_generate: int
+    :param returnfreq: Allows for the dict to be in terms of frequency
+    :type returnfreq: dict
+    :returns: List of all of the structures to over the threshold
+    :rtype: list
+    """
+
+    dict_of_structures = dic_of_sampled_structures(sequence,
+                                                   num_structures_to_generate,
+                                                   region=region, temp=temp,
+                                                   returnfreq=True)
+    total = float(sum(dict_of_structures.values()))
+
+    for key in dict_of_structures:
+        dict_of_structures[key] = dict_of_structures[key]/total
+
+    # turn it to a list
+    frequency_structure = [(freq, key) for key, freq in dict_of_structures.iteritems()]
+    frequency_structure.sort(reverse=True)
+
+    total = 0
+    output_list = []
+    for freq, structure in frequency_structure:
+        total += freq
+        output_list.append(structure)
+        if total >= frequency:
+            break
+
+    return output_list
+
 def list_of_dominant_sampled_structures(sequence, num_structures_to_generate,
                                         threshold=0.01, region=None, temp=37):
     """ Function uses vienna RNA to sample many structures and then return
@@ -125,7 +179,7 @@ def list_of_dominant_sampled_structures(sequence, num_structures_to_generate,
     """
     dict_of_structures = dic_of_sampled_structures(sequence,
                                                    num_structures_to_generate,
-                                                   region=None, temp=37,
+                                                   region=region, temp=temp,
                                                    returnfreq=True)
     return_list = []
     for key in dict_of_structures:

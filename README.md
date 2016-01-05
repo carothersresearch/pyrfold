@@ -1,6 +1,6 @@
 pyrfold
 =======
-v0.1.4
+v0.1.6
 
 ## Requirments:
 ```

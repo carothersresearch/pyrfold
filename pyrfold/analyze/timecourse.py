@@ -195,7 +195,7 @@ class TimeCourseStructure(object):
                 pass
         return structurearray.max()
 
-    def maximum_final_frequency_of_structures(self, structurelist):
+    def final_frequency_of_structures(self, structurelist):
         """
         This function searches the populated structuredataframe for all of the
         structures that are requested and then returns the final frequency
@@ -210,6 +210,28 @@ class TimeCourseStructure(object):
             if structure in structurelist:
                 return_frequency += frequency
         return return_frequency
+
+    def average_frequency_structures_expressed(self, structurelist):
+        """
+        This function will process an exisiting structuredataframe. It searches
+        for every strcuture that is asked for, creates a vector of their total
+        folding frequency, and then integrates under this data and normalizes
+        to the toal time that is elapsed
+        :param structurelist: list of all of the structures to be considered
+        :type structurelist: list of str
+        :return: Average frequency structures appeared
+        :rtype: float
+        """
+        structurearray = np.zeros(self.structuredataframe.shape[0])
+        for structure in structurelist:
+            try:
+                structurearray += self.structuredataframe[structure].values
+            except KeyError:
+                pass
+        total_time = self.structuredataframe.index[-1] - \
+                     self.structuredataframe.index[0]
+        return np.trapz(x=self.structuredataframe.index, y=structurearray) / \
+               total_time
 
     def final_structures_seen(self, structurewindow, cutoff=0.0):
         """Generates data for the specific window and then returns the windowed

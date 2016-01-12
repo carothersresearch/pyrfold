@@ -141,7 +141,7 @@ class TimeCourseStructure(object):
         :param sequence: the sequence of the part that you are looking for
         :type sequence: str
         """
-        #First convert the string to RNA
+        # First convert the string to RNA
         sequence = dna_to_rna(sequence)
         try:
             lowindex = self.completesequence.index(sequence) + 1
@@ -211,7 +211,7 @@ class TimeCourseStructure(object):
                 return_frequency += frequency
         return return_frequency
 
-    def average_frequency_structures_expressed(self, structurelist):
+    def average_frequency_of_structures(self, structurelist):
         """
         This function will process an exisiting structuredataframe. It searches
         for every strcuture that is asked for, creates a vector of their total

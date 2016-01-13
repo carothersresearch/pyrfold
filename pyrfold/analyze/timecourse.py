@@ -233,6 +233,26 @@ class TimeCourseStructure(object):
         return np.trapz(x=self.structuredataframe.index, y=structurearray) / \
                total_time
 
+    def time_frequency_vector_of_structures(self, structurelist):
+        """
+        This function pulls out the time and frequency of a set of structures
+        for a dataframe which has data.
+        :param sructurelist:
+        :type structurelist: list
+        :return: array of (time, frequency)
+        :rtype: np.array
+        """
+        structurearray = np.zeros(self.structuredataframe.shape[0])
+        timearray = np.array(self.structuredataframe.index)
+
+        for structure in structurelist:
+            try:
+                structurearray += self.structuredataframe[structure].values
+            except KeyError:
+                pass
+
+        return np.vstack((timearray, structurearray))
+
     def final_structures_seen(self, structurewindow, cutoff=0.0):
         """Generates data for the specific window and then returns the windowed
         structures for the devices

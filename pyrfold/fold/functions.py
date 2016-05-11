@@ -3,6 +3,7 @@ This script contains functions which are useful for RNA folding devices
 """
 from .vienna import Vienna
 
+
 def structure_seen_in_mfe(sequence, mfe_structures, region=None, temp=37):
     """Will fold a sequence using vienna package and look through the list
     of MFE_structures are given to see if those structures exist
@@ -18,6 +19,7 @@ def structure_seen_in_mfe(sequence, mfe_structures, region=None, temp=37):
     :returns: Boolean answer if the structure was seen or not
     :rtype: bool
     """
+    sequence = str(sequence)
     temp_vienna = Vienna([sequence])
     structure = temp_vienna.mfe(temp=temp, returnstructure=True)[0][1]
     if region is not None:
@@ -106,6 +108,7 @@ def dic_of_sampled_structures(sequence, num_structures_to_generate,
             returndict[key]= returndict[key]/total
     return returndict
 
+
 def list_of_structures_to_define_fraction_of_ensemble(sequence,
                                                       num_structures_to_generate,
                                                       frequency=0.9,
@@ -159,6 +162,7 @@ def list_of_structures_to_define_fraction_of_ensemble(sequence,
             break
 
     return output_list
+
 
 def list_of_dominant_sampled_structures(sequence, num_structures_to_generate,
                                         threshold=0.01, region=None, temp=37):

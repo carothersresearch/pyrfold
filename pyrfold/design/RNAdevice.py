@@ -4,6 +4,7 @@ RNAparts and devices.
 """
 import random
 
+
 class RNAdevice(object):
     """Basic class for the design of these parts"""
     def __init__(self, partlist, sequencelist):
@@ -12,9 +13,9 @@ class RNAdevice(object):
         self.parttoposition = {}
         self.parttosequence = {}
         self.sequence = ''
-        #Make dictionary of partname to sequence and partname to sequence
+        # Make dictionary of partname to sequence and partname to sequence
         self.update_part_index_and_sequence_dict()
-        #self.update_sequence()
+        # self.update_sequence()
 
     def __str__(self):
         return convert_to_RNA(self.sequence)
@@ -111,6 +112,7 @@ class RNApart(object):
         self.parttosequence = dict(zip(self.partlist, [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
 
+
 class RNAsequence(object):
     def __init__(self, sequence):
         self.sequence = convert_to_RNA(sequence)
@@ -126,6 +128,7 @@ class RNAsequence(object):
 
     def __str__(self):
         return self.sequence
+
 
 class Helix(object):
     """This class will simply keep track of two sides of helix and
@@ -163,6 +166,7 @@ class Helix(object):
         self.helixes[0] = random_sequence(self.size)
         self.generate_helix(self, randomly_substitue_u_for_c=False)
 
+
 class Unpaired(object):
     """This class will have the basic functionality of making unpaired
     sequences specifically with random generation in mind
@@ -188,6 +192,7 @@ class Unpaired(object):
                                         self.sizerange[1] + 1))
         self.sequence = random_sequence(self.size, self.gcrange)
 
+
 def random_sequence(size, GC_range=None):
     """
     Simple Random RNA generating random sequence generator
@@ -202,6 +207,7 @@ def random_sequence(size, GC_range=None):
         else:
             return ''.join(out)
 
+
 def generate_docking_site(site_size = 20):
     for i in range(10000): #long counter to make sure we find a sequence that works
         out = []
@@ -215,14 +221,17 @@ def generate_docking_site(site_size = 20):
         if 0.35 <= GC_content(out) <= 0.5:
             return ''.join(out)
 
+
 def GC_content(sequence):
     GC_count = sequence.count('G')
     GC_count += sequence.count('C')
     return float(GC_count)/len(sequence)
 
+
 def convert_to_RNA(sequence):
     sequence = sequence.upper()
     return sequence.replace('T', 'U')
+
 
 def convert_to_DNA(sequence):
     sequence = str(sequence).upper()

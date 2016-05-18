@@ -14,6 +14,7 @@ DNA_complement_dict = {'A': 'T',
                        'G': 'C',
                        'C': 'G'}
 
+# UNITTESTED CODE
 
 def index_of_sequence(sequence, sub_sequence):
     """this function will look through the parts and identify the start
@@ -26,7 +27,7 @@ def index_of_sequence(sequence, sub_sequence):
     :returns: Start and stop index (1 indexed).
     :rtype: list
     """
-    #First convert the string to RNA
+    # First convert the string to RNA
     sequence = convert_to_RNA(sequence)
     sub_sequence = convert_to_RNA(sub_sequence)
     try:
@@ -36,31 +37,37 @@ def index_of_sequence(sequence, sub_sequence):
         return 'Target sequence is not in the complete sequence'
     return [lowindex, highindex]
 
-def random_RNA_sequence(size, GC_range=None):
+
+def random_sequence(size, GC_range=None, strand_type='RNA'):
     """
-    Simple Random RNA generating random sequence generator
+    Simple random nucleotide sequence generator
+    Nucleobases accepts RNA or DNA as input
+
+    :type size: int
+    :param size: Length of sequence to be returned
+    :type GC_range: list of floats
+    :param GC_range: Low and high bounds of GC content to be accepted
+    :type nucleobase: str
+    :param nucleobase: RNA or DNA as input for the type of sequence to return
     """
-    for i in range(10000):
+    # Error checking
+    if strand_type not in ['RNA', 'DNA']:
+        raise ValueError('Strand_type accepts RNA or DNA')
+
+    if strand_type == 'RNA':
+        base_set = ['A', 'U', 'G', 'C']
+    elif strand_type == 'DNA':
+        base_set = ['A', 'T', 'G', 'C']
+
+    for i in range(100000):
         out = []
         for placecounter in range(size):
-            out.append(choice(['A', 'U', 'G', 'C']))
+            out.append(choice(base_set))
         if GC_range:
-            if GC_range[0] <= GC_content(out) <= GC_range[1]:
-                return ''.join(out)
-        else:
-            return ''.join(out)
-
-
-def random_DNA_sequence(size, GC_range=None):
-    """
-    Simple Random DNA generating random sequence generator
-    """
-    for i in range(10000):
-        out = []
-        for placecounter in range(size):
-            out.append(choice(['A', 'T', 'G', 'C']))
-        if GC_range:
-            if GC_range[0] <= GC_content(out) <= GC_range[1]:
+            if GC_range[0] > GC_range[1]:
+                raise ValueError('GR_range must go from low to high')
+            if ((GC_content(''.join(out)) <= GC_range[1]) &
+               (GC_content(''.join(out)) >= GC_range[0])):
                 return ''.join(out)
         else:
             return ''.join(out)
@@ -84,37 +91,11 @@ def RNA_sequences_complementary(sequence1, sequence2):
     return True
 
 
-def randomly_substitue_u_for_c(sequence, probability=0.5):
-    """Function for randomly_substituing Us for Cs for a given sequence
-    """
-    sequence = str(sequence)
-    outsequence = []
-    for base in sequence:
-        if base == 'C':
-            if random() <= probability:
-                base = 'U'
-        outsequence.append(base)
-    return ''.join(outsequence)
-
-
 def GC_content(sequence):
     sequence = str(sequence)
     GC_count = sequence.count('G')
     GC_count += sequence.count('C')
     return float(GC_count)/len(sequence)
-
-
-def convert_to_RNA(sequence):
-    sequence = sequence.upper()
-    return sequence.replace('T', 'U')
-
-
-def convert_to_DNA(sequence):
-    """
-    Converts RNA to DNA
-    """
-    sequence = str(sequence).upper()
-    return sequence.replace('U', 'T')
 
 
 def reverse_complement(sequence, strand_type='RNA'):
@@ -144,3 +125,59 @@ def reverse_complement(sequence, strand_type='RNA'):
         tempseq = tempseq.replace('x', 'C')
         sequence = tempseq[::-1]
     return sequence
+
+
+# NOT UNITTESTED CODE
+class RNAsequence(object):
+    def __init__(self, sequence):
+        self.sequence = convert_to_RNA(sequence)
+
+    def reverse_complement(self):
+        self.sequence = reverse_complement(self.sequence, strand_type='RNA')
+
+    def __str__(self):
+        return self.sequence
+
+
+def randomly_substitue_u_for_c(sequence, probability=0.5):
+    """
+    Function for randomly_substituing Us for Cs for a given sequence
+    """
+    sequence = str(sequence)
+    outsequence = []
+    for base in sequence:
+        if base == 'C':
+            if random() <= probability:
+                base = 'U'
+        outsequence.append(base)
+    return ''.join(outsequence)
+
+
+def convert_to_RNA(sequence):
+    """
+    Concerts DNA sequence to RNA Sequence
+    """
+    sequence = sequence.upper()
+    return sequence.replace('T', 'U')
+
+
+def convert_to_DNA(sequence):
+    """
+    Converts RNA to DNA
+    """
+    sequence = str(sequence).upper()
+    return sequence.replace('U', 'T')
+
+
+def random_RNA_sequence(size, GC_range=None):
+    """
+    Simple Random RNA generating random sequence generator
+    """
+    return random_sequence(size, GC_range, strand_type='RNA')
+
+
+def random_DNA_sequence(size, GC_range=None):
+    """
+    Simple Random DNA generating random sequence generator
+    """
+    return random_sequence(size, GC_range, strand_type='DNA')

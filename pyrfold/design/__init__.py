@@ -1,3 +1,3 @@
 from . import insulating
 from ._sequence import Designsequence
-from .RNAdevice import RNAdevice, Helix, Unpaired
+from .RNA import Device, Helix, Unpaired

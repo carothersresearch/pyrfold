@@ -2,6 +2,7 @@ import unittest
 from pyrfold.design import RNA
 from pyrfold.utilities import RNA_sequences_complementary, GC_content
 
+
 class Device_testcase(unittest.TestCase):
 
     def setUp(self):
@@ -49,7 +50,7 @@ class Device_testcase(unittest.TestCase):
             self.assertEqual(self.init_obj.part_sequence(partname),
                              partsequence)
 
-    def combined_part_sequences(self):
+    def test_combined_part_sequences(self):
         # Testing individual parts
         for partname, partsequence in zip(self.partnames, self.partsequences):
             self.assertEqual(self.init_obj.combined_part_sequences([partname]),
@@ -58,6 +59,402 @@ class Device_testcase(unittest.TestCase):
         for high_index in range(1, 4):
             partnamelist = self.partnames[0:high_index]
             self.assertEqual(self.init_obj.combined_part_sequences(partnamelist) ,''.join(self.partsequences[0:high_index]))
+
+    def test_create_kinefold_submisison_object(self):
+        # First testing the 'all' case
+        device_name = 'test_device'
+        partcontexttofold = 'all'
+        partstofold = None
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold)
+
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'
+
+        self.assertEqual(expected_name, test_obj.name)
+        self.assertEqual(self.init_obj.sequence, test_obj.sequence)
+
+        device_name = 'test_device'
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold)
+        expected_sequence = self.init_obj.combined_part_sequences(
+            partcontexttofold)
+        self.assertEqual(expected_sequence, test_obj.sequence)
+        self.assertEqual(1, test_obj.windowstart)
+        self.assertEqual(len(expected_sequence), test_obj.windowstop)
+
+        # TESTING error cases for devices
+        fiveprimeshift = -20
+        fiveprimerefpart = None
+        threeprimeshift = False
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        self.assertRaises(IndexError,
+                          self.init_obj.create_kinefold_submission_object,
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        fiveprimeshift = 50
+        fiveprimerefpart = None
+        threeprimeshift = False
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        self.assertRaises(IndexError,
+                          self.init_obj.create_kinefold_submission_object,
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        fiveprimeshift = -3
+        fiveprimerefpart = None
+        threeprimeshift = 30
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        self.assertRaises(IndexError,
+                          self.init_obj.create_kinefold_submission_object,
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        fiveprimeshift = -3
+        fiveprimerefpart = None
+        threeprimeshift = -50
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        self.assertRaises(IndexError,
+                          self.init_obj.create_kinefold_submission_object,
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        # Testing naming conventions
+
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
+            '#five_prime_shift&2#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+        self.assertEqual(expected_name, test_obj.name)
+
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = 'all'
+        partstofold = None
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        # Testing that the start and stop are correct
+        # Requested five 2 and three -3
+        # ACAGGU-ACCGGGAGA-GGGG-ACAUAC
+        # --+---------------------+---
+        expected_start = 3
+        expected_stop = 22
+        self.assertEqual(expected_start, test_obj.windowstart)
+        self.assertEqual(expected_stop, test_obj.windowstop)
+
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        # Testing that the start and stop are correct
+        # Requested five 2 and three -3
+        # ACCGGGAGA-GGGG-ACAUAC
+        # --+------&----&--+---
+        expected_start = 3
+        expected_stop = 16
+        self.assertEqual(expected_start, test_obj.windowstart)
+        self.assertEqual(expected_stop, test_obj.windowstop)
+
+        fiveprimeshift = -4
+        fiveprimerefpart = 'test2'
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = 'all'
+        partstofold = None
+
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
+            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        self.assertEqual(expected_name, test_obj.name)
+
+        # Testing that the start and stop are correct
+        # Requested five 2 and three -3
+        # ACAGGU-ACCGGGAGA-GGGG-ACAUAC
+        # --+---------------------+---
+        expected_start = 3
+        expected_stop = 22
+        self.assertEqual(expected_start, test_obj.windowstart)
+        self.assertEqual(expected_stop, test_obj.windowstop)
+
+        fiveprimeshift = -4
+        fiveprimerefpart = 'test3'
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
+            '#five_prime_shift&-4#rel_five_prime_part&test3' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+
+        self.assertEqual(expected_name, test_obj.name)
+
+        # Testing that the start and stop are correct
+        # Requested five -4 and three -3
+        # ACCGGGAGA-GGGG-ACAUAC
+        # -----+-----------+---
+        expected_start = 6
+        expected_stop = 16
+        self.assertEqual(expected_start, test_obj.windowstart)
+        self.assertEqual(expected_stop, test_obj.windowstop)
+
+        # Testing folding parts
+        fiveprimeshift = -4
+        fiveprimerefpart = 'test2'
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = 'all'
+        partstofold = ['test3']
+
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
+            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
+            '#part_to_fold&test3'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+        self.assertEqual(expected_name, test_obj.name)
+        # ACAGGU-ACCGGGAGA-GGGG-ACAUAC
+        # --+---------------------+---
+        partstart = 16
+        partstop = 16+3
+        self.assertEqual(test_obj.partstartstoplist[0], [partstart, partstop])
+
+        fiveprimeshift = -4
+        fiveprimerefpart = 'test2'
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = 'all'
+        partstofold = ['test3', 'test4']
+
+        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
+            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
+            '#part_to_fold&test3#part_to_fold&test4'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart)
+        self.assertEqual(expected_name, test_obj.name)
+        # ACAGGU-ACCGGGAGA-GGGG-ACAUAC
+        # --+---------------------+---
+        partstart = 16
+        partstop = 16+3
+        self.assertEqual(test_obj.partstartstoplist[0], [partstart, partstop])
+        partstart = 20
+        partstop = 20+5
+        self.assertEqual(test_obj.partstartstoplist[1], [partstart, partstop])
+
+        # Testing pseudoknots and entaglemtns
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+        polrate = 30
+        foldtimeafter = 10
+        experimenttype = 1
+        pseudoknots = 0
+        entanglements = 0
+
+        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
+            '#five_prime_shift&2#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart,
+                                                    polrate, foldtimeafter,
+                                                    experimenttype,
+                                                    pseudoknots,
+                                                    entanglements)
+
+        self.assertEqual(expected_name, test_obj.name)
+        self.assertEqual(experimenttype, test_obj.experimenttype)
+        self.assertEqual(pseudoknots, test_obj.pseudoknots)
+        self.assertEqual(entanglements, test_obj.entanglements)
+
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+        polrate = 30
+        foldtimeafter = 10
+        experimenttype = 1
+        pseudoknots = 1
+        entanglements = 0
+
+        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
+            '#five_prime_shift&2#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
+            '#pseudoknots&True'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart,
+                                                    polrate, foldtimeafter,
+                                                    experimenttype,
+                                                    pseudoknots,
+                                                    entanglements)
+
+        self.assertEqual(expected_name, test_obj.name)
+        self.assertEqual(experimenttype, test_obj.experimenttype)
+        self.assertEqual(pseudoknots, test_obj.pseudoknots)
+        self.assertEqual(entanglements, test_obj.entanglements)
+
+        fiveprimeshift = 2
+        fiveprimerefpart = None
+        threeprimeshift = -3
+        threeprimerefpart = None
+        partcontexttofold = ['test2', 'test3', 'test4']
+        partstofold = None
+        polrate = 30
+        foldtimeafter = 10
+        experimenttype = 1
+        pseudoknots = 1
+        entanglements = 1
+
+        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
+            '#five_prime_shift&2#rel_five_prime_part&test2' + \
+            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
+            '#pseudoknots&True' + '#entanglements&True'
+
+        test_obj = self.init_obj.create_kinefold_submission_object(
+                                                    device_name,
+                                                    partcontexttofold,
+                                                    partstofold,
+                                                    fiveprimeshift,
+                                                    fiveprimerefpart,
+                                                    threeprimeshift,
+                                                    threeprimerefpart,
+                                                    polrate, foldtimeafter,
+                                                    experimenttype,
+                                                    pseudoknots,
+                                                    entanglements)
+
+        self.assertEqual(expected_name, test_obj.name)
+        self.assertEqual(experimenttype, test_obj.experimenttype)
+        self.assertEqual(pseudoknots, test_obj.pseudoknots)
+        self.assertEqual(entanglements, test_obj.entanglements)
 
     def test_remove_part(self):
         self.init_obj.remove_part(partname='test1')
@@ -93,14 +490,17 @@ class Helix_testcase(unittest.TestCase):
 class Unpaired_testcase(unittest.TestCase):
 
     def setUp(self):
-        self.size_ranges = [(1, 10), (2, 4), (7, 8)]
+        self.size_ranges = [(5, 10), (12, 20), (7, 8)]
         self.GC_ranges_to_test = [None, (0.1, 0.4), (0.4, 0.7)]
 
-    def test_generate_helix(self):
+    def test_generate_random_sequence(self):
         for size_range in self.size_ranges:
             for gc_range in self.GC_ranges_to_test:
-                test_obj = RNA.Unpaired(size_range=size_range, GC_range=gc_range)
+
+                test_obj = RNA.Unpaired(size_range=size_range,
+                                        GC_range=gc_range)
                 test_obj.generate_random_sequence()
+
 
                 self.assertTrue((size_range[0] <= len(str(test_obj))) &
                                 (len(str(test_obj)) <= size_range[1]))
@@ -109,11 +509,6 @@ class Unpaired_testcase(unittest.TestCase):
 
                     self.assertTrue((gc_range[0] <= GC_content(str(test_obj))) &
                                     (GC_content(str(test_obj)) <= gc_range[1]))
-
-
-
-
-
 
 
 

@@ -7,15 +7,17 @@ import copy
 from ..utilities import convert_to_RNA, random_sequence, \
                         RNA_sequences_complementary, \
                         randomly_substitue_u_for_c, RNAsequence
+from ..foldingsub import FoldingSubData
 
 # UNIT TESTED CODE
+
 
 class Device(object):
     """Basic class for the design of these parts"""
     def __init__(self, partnamelist, sequencelist):
         """
         Initializes the object with parnames and corresponding sequences.
-        Note that the order of the sequence_list and partlist required to be
+        Note that the order of the sequence_list and partnamelist required to be
         in the same order.
 
         :param partnamelist: List of partnames
@@ -31,7 +33,6 @@ class Device(object):
         # Make dictionary of partname to sequence and partname to sequence
         self.update_part_index_and_sequence_dict()
 
-
     def __str__(self):
         return convert_to_RNA(self.sequence)
 
@@ -42,7 +43,7 @@ class Device(object):
 
     def add_part(self, partname, sequence, partposition):
         """
-        Will add a part and a sequence to the partlist and sequencelists.
+        Will add a part and a sequence to the partnamelist and sequencelists.
         :param partname: Name of the part that is being inserted
         :type partname: str
         :param sequence: Sequence of part that is being inserted
@@ -55,7 +56,7 @@ class Device(object):
         self.update_part_index_and_sequence_dict()
 
     def remove_part(self, partname):
-        """finds the part that is requested and removes it from the partlist"""
+        """finds the part that is requested and removes it from the partnamelist"""
         partindex = self.partnamelist.index(partname)
         self.partnamelist.pop(partindex)
         self.sequencelist.pop(partindex)
@@ -80,6 +81,217 @@ class Device(object):
         self.parttoposition = dict(zip(self.partnamelist, listofindexs))
         self.parttosequence = dict(zip(self.partnamelist, [seq.upper() for seq in self.sequencelist]))
         self.sequence = ''.join(self.sequencelist)
+
+    def create_kinefold_submission_object(self, device_name,
+                                          partcontexttofold='all',
+                                          partstofold=None,
+
+                                          fiveprimeshift=False,
+                                          fiveprimerefpart=None,
+                                          threeprimeshift=False,
+                                          threeprimerefpart=None,
+
+                                          polrate=30, foldtimeafter=1,
+                                          experimenttype=2,
+                                          pseudoknots=0, entanglements=0,
+                                          numberofsimulations=10,
+                                          helix_min_free_engery=6.3460741):
+        """
+        Creates a kinefold submission object that when added to a list can
+        be used to create a submission object for kinefold
+        folding. This has all of the functionality of FoldingSubData object -
+        that additionally will name simulation objects in a way that will be
+        easily deconstructed into a pandas dataframe.
+
+        :param device_name: A base name for the device that is being folded
+        :type device_name: str
+        :param partcontexttofold: List of all parts housed within the object
+            that are to be folded.
+        :type partcontexttofold: list of str
+        :param partstofold: List of parts that you intend to calcuate folding
+            data on.
+        :type partstofold: list of str
+        :param fiveprimeshift: Shifts the folding window of the seqeunce from
+            the five prime end of the sequence. This shifting is always
+            relative to the fiveprime portion of a part.
+        :type fiveprimeshift: int
+        :param fiveprimerefpart: The part that this shifting should be done
+            relative to. NOTE shifting is always relative to the five prime
+            portion of the part.
+        :type fiveprimerefpart: str
+        :param threeprimeshift: Shifts the folding window of the seqeunce from
+            the three prime end of the sequence. This shifting is always
+            relative to the three prim portion of a part.
+        :type threeprimeshift: str
+        :param threeprimerefpart: The part that this shifting should be done
+            relative to. NOTE shifting is always relative to the three prime
+            portion of the part.
+        :type threeprimerefpart: str
+        :param polrate: The rate of polymerase for the reaction [nt/s].
+        :type polrate: float
+        :param foldtimeafter: Time the sequence is allowed to fold after total
+            elongation (for co-trans folding). The total time of folding (melt
+            and anneal folding) [s].
+        :type foldtimeafter: float
+        :param experimenttype: 1 for melt and anneal folding, 2 for co-trans
+            folding
+        :type experimenttype: int
+        :param pseudoknots: 0 for no pseudoknot considerations, 1 for
+            pseudoknots to be considered.
+        :type pseudoknots: int
+        :param entanglements: 0 for entanglements to be ignored. 1 for
+            entanglements to be considered.
+        :type entanglements: int
+        :param numberofsimulations: Number of simulations to be completed for
+            a given sequence. Recommended sqrt(length of sequence)
+        :type numberofsimulations: int
+        :param helix_min_free_engery: The minimum free energy a helix is
+            required to contribute for it to be considered [kcal/mol]
+        :type helix_min_free_engery: float
+        """
+        # First create the name of the simulation object
+        top_character = '#'
+        bottom_character = '&'
+
+        def additional_element_to_name(class_name, value,
+                                       top_character=top_character,
+                                       bottom_character=bottom_character):
+            return top_character + class_name + bottom_character + str(value)
+
+        out_name = 'dev' + bottom_character + device_name
+
+        if partcontexttofold == 'all':
+            partcontexttofold = self.partnamelist
+
+        if experimenttype == 2:
+            out_name += additional_element_to_name('pol', polrate)
+            out_name += additional_element_to_name('fold_time_after',
+                                                   foldtimeafter)
+        else:
+            out_name += additional_element_to_name('anneal_time',
+                                                   foldtimeafter)
+
+        if fiveprimeshift:
+            out_name += additional_element_to_name('five_prime_shift',
+                                                   fiveprimeshift)
+            if fiveprimerefpart:
+                out_name += additional_element_to_name('rel_five_prime_part',
+                                                       fiveprimerefpart)
+            else:
+                out_name += additional_element_to_name('rel_five_prime_part',
+                                                       partcontexttofold[0])
+            # calculate five prime shift
+
+        if threeprimeshift:
+            out_name += additional_element_to_name('three_prime_shift',
+                                                   threeprimeshift)
+            if threeprimerefpart:
+                out_name += additional_element_to_name('rel_three_prime_part',
+                                                       threeprimerefpart)
+            else:
+                out_name += additional_element_to_name('rel_three_prime_part',
+                                                       partcontexttofold[-1])
+            # calculate five prime shift
+        if partstofold:
+            for part in partstofold:
+                out_name += additional_element_to_name('part_to_fold',
+                                                       part)
+
+        if helix_min_free_engery != 6.3460741:
+            out_name += additional_element_to_name('helix_min_energy',
+                                                   helix_min_free_engery)
+
+        if pseudoknots:
+            out_name += additional_element_to_name('pseudoknots', 'True')
+        if entanglements:
+            out_name += additional_element_to_name('entanglements', 'True')
+
+        # NOTES FOR determining the indexes to simulate
+        # The self.parttoposition is in 0 index and the start-stop windows
+        # Are given in 1 indexed
+
+        # I might not actually need to have a relative window stop
+        sequence_to_fold = self.combined_part_sequences(partcontexttofold)
+        rel_windowstart_0 = self.parttoposition[partcontexttofold[0]][0]
+        rel_windowstop_0 = self.parttoposition[partcontexttofold[-1]][1]
+        windowstart_0 = 0
+        windowstop_0 = self.parttoposition[partcontexttofold[-1]][1] - \
+            rel_windowstart_0
+        max_window_size = windowstop_0
+
+        if fiveprimeshift:
+            if fiveprimerefpart:
+                # need an index
+                start, stop = self.parttoposition[fiveprimerefpart]
+            else:
+                # if partcontexttofold == 'all':
+                #     # Just grab the outside part
+                #     start, stop = self.parttoposition[self.partnamelist[0]]
+                # else:
+                start, stop = self.parttoposition[partcontexttofold[0]]
+            # We have the start stop of the device that we'll make the decision
+            # on so now we have to shift everything
+            # We are going to shift based on the fiveprime side of this
+            rel_shift_index = start + fiveprimeshift
+
+            windowstart_0 += rel_shift_index - rel_windowstart_0
+
+        if threeprimeshift:
+            if threeprimerefpart:
+                # need an index
+                start, stop = self.parttoposition[threeprimerefpart]
+            else:
+                # if partcontexttofold == 'all':
+                #     # Just grab the outside part
+                #     start, stop = self.parttoposition[self.partnamelist[-1]]
+                # else:
+                start, stop = self.parttoposition[partcontexttofold[-1]]
+            # We have the start stop of the device that we'll make the decision
+            # on so now we have to shift everything
+            # We are going to shift based on the fiveprime side of this
+            rel_shift_index = stop + threeprimeshift
+            windowstop_0 += rel_shift_index - rel_windowstop_0
+
+        if (windowstart_0 < 0) or (windowstart_0 > max_window_size):
+            raise IndexError
+            print "Shifting window outside of sequence"
+
+        if (windowstop_0 > max_window_size) or (windowstop_0 < 0):
+            raise IndexError
+            print "Shifting window outside of sequence"
+
+        if windowstart_0 >= windowstop_0:
+            raise IndexError
+            print "Requested windowstart is greater than or equal to" +\
+                " windowstop"
+
+        # Populate the folding sub object
+        # Creating the start_stop_list
+        part_list = []
+        part_start_stop_list = []
+        if partstofold:
+            for part in partstofold:
+                part_list.append(part)
+                start, stop = self.parttoposition[part]
+                rel_start = start - rel_windowstart_0
+                rel_stop = stop - rel_windowstart_0
+                # The plus 1 is to shift to 1 indexed
+                part_start_stop_list.append([rel_start+1, rel_stop])
+
+        return FoldingSubData(name=out_name, sequence=sequence_to_fold,
+                              windowstart=windowstart_0+1,
+                              windowstop=windowstop_0,
+                              partstartstoplist=part_start_stop_list,
+                              partnamelist=part_list,
+                              referencepart=None,
+                              forcedhelixes=[],
+                              polrate=polrate,
+                              foldtimeafter=foldtimeafter,
+                              experimenttype=experimenttype,
+                              pseudoknots=pseudoknots,
+                              entanglements=entanglements,
+                              numberofsimulations=numberofsimulations,
+                              helix_min_free_eng=helix_min_free_engery)
 
 
 class Helix(object):
@@ -156,11 +368,11 @@ class Unpaired(object):
 
 # class Part():
 #     """a class which peices together unpaired, helix, and raw_sequence"""
-#     def __init__(self, structure_name_ordered_list, partlist):
+#     def __init__(self, structure_name_ordered_list, partnamelist):
 #         self.structure_name_list = structure_name_ordered_list
 #         self.partdictionary = {}
 #         for structure_name, structure in zip(structure_name_ordered_list,
-#                                              partlist):
+#                                              partnamelist):
 #             # Check if it's a helix
 #             if 'H' in structure_name:
 #                 if 'p' in structure_name:
@@ -276,5 +488,3 @@ class Unpaired(object):
 #         return Helix(sequence, rev_comp)
 #     elif strand == 1:
 #         return Helix(rev_comp, sequence)
-
-

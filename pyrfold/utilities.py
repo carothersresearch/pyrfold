@@ -2,6 +2,8 @@
 DNA work
 """
 from random import random, choice
+import os
+import warnings
 
 # Dictionaries of complement sequences
 RNA_complement_dict = {'A': 'U',
@@ -58,6 +60,14 @@ def random_sequence(size, GC_range=None, strand_type='RNA'):
         base_set = ['A', 'U', 'G', 'C']
     elif strand_type == 'DNA':
         base_set = ['A', 'T', 'G', 'C']
+
+    # Check GC bounds
+    if GC_range:
+        if (GC_range[0] == 0) or (GC_range[1] == 1):
+            pass
+        elif (GC_range[0]*size > (size - 1) and (GC_range[1]*size < 1)):
+            warnings.warn("Impossible GC_range requested, removed constraint")
+            GC_range = None
 
     for i in range(100000):
         out = []
@@ -128,6 +138,31 @@ def reverse_complement(sequence, strand_type='RNA'):
 
 
 # NOT UNITTESTED CODE
+
+
+def file_name_splitter(input_file_name, top_character='#',
+                       bottom_character='&'):
+    """
+    This function will split the filename into it's part and build a
+    a dictionary of its function. The filename is expecting the
+    parameters to be be divided by '#' and the value to be devided
+    by '&'
+    :input_file_name type: string
+    :input_file_name param: Filename to be divided
+    """
+    out_dictionary = {}
+    # First removing the filepath
+    file_name = os.path.splitext(os.path.basename(input_file_name))[0]
+    variables = file_name.split(top_character)
+    for variable in variables:
+        variable_name, value = variable.split(bottom_character)
+        try:
+            out_dictionary[variable_name].append(value)
+        except:
+            out_dictionary[variable_name] = [value]
+    return out_dictionary
+
+
 class RNAsequence(object):
     def __init__(self, sequence):
         self.sequence = convert_to_RNA(sequence)

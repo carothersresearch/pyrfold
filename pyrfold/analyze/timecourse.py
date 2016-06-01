@@ -165,7 +165,10 @@ class TimeCourseStructure(object):
         timearray = timearray - min(timearray)
         structurearray = np.zeros(len(timearray))
         for structure in structurelist:
-            structurearray += self.structuredataframe[structure].values
+            try:
+                structurearray += self.structuredataframe[structure].values
+            except KeyError:
+                pass
         # timearray = timearray[:1000]
         # structurearray = structurearray[:1000]
         # shift = self.baseadditiontime * self.structurewindow[1]

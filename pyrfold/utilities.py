@@ -6,10 +6,16 @@ import os
 import warnings
 
 # Dictionaries of complement sequences
+RNA_complement_dict_gu = {'A': 'U',
+                          'U': ['A', 'G'],
+                          'G': ['C', 'U'],
+                          'C': 'G'}
+
 RNA_complement_dict = {'A': 'U',
-                       'U': ['A', 'G'],
-                       'G': ['C', 'U'],
+                       'U': 'A',
+                       'G': 'C',
                        'C': 'G'}
+
 
 DNA_complement_dict = {'A': 'T',
                        'T': 'A',
@@ -83,24 +89,6 @@ def random_sequence(size, GC_range=None, strand_type='RNA'):
             return ''.join(out)
 
 
-def RNA_sequences_complementary(sequence1, sequence2):
-    """
-    Function to determine if two RNA sequences are complementary
-    """
-    # Make sure the sequences are RNA
-    sequence1 = convert_to_RNA(sequence1)
-    sequence2 = convert_to_RNA(sequence2)
-    if len(sequence1) != len(sequence2):
-        # write error script
-        pass
-    for position, base1 in enumerate(sequence1):
-        if sequence2[-(position+1)] in RNA_complement_dict[base1]:
-            continue
-        else:
-            return False
-    return True
-
-
 def GC_content(sequence):
     sequence = str(sequence)
     GC_count = sequence.count('G')
@@ -135,6 +123,32 @@ def reverse_complement(sequence, strand_type='RNA'):
         tempseq = tempseq.replace('x', 'C')
         sequence = tempseq[::-1]
     return sequence
+
+
+def RNA_sequences_complementary(sequence1, sequence2, gu_wobble=True):
+    """
+    Function to determine if two RNA sequences are complementary
+
+    # TODO
+
+    """
+    # Make sure the sequences are RNA
+    if gu_wobble:
+        complement_dict = RNA_complement_dict_gu
+    else:
+        complement_dict = RNA_complement_dict
+    sequence1 = convert_to_RNA(sequence1)
+    sequence2 = convert_to_RNA(sequence2)
+    if len(sequence1) != len(sequence2):
+        # write error script
+        raise ValueError
+        print "Supplied sequences are different lengths"
+    for position, base1 in enumerate(sequence1):
+        if sequence2[-(position+1)] in complement_dict[base1]:
+            continue
+        else:
+            return False
+    return True
 
 
 # NOT UNITTESTED CODE

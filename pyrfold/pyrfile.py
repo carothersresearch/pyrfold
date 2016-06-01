@@ -97,13 +97,15 @@ def sub_summary(filename):
 ########################################################################
 
 
-def filled_in_form(filename, devicenametosubobj):
-    """()-> csv file to fill in
-    This should simply create an empty submission file for submission
-    dicty = {name: KineSubData class}
+def filled_in_kinefold_form(filename, list_of_sub_objects):
+    """
+    Creates a kinefold submission for for simulating and processing
+    devices on hyak.
+    :param filename: The name of the csv filename.
+    :type filename: str
+    :param list_of_sub_objects: List of submission objects to be created
+    :type list_of_sub_objects: list of str
 
-    TODO URGENT this is not working for the current submission system
-    But it will work without forced data and parts
     """
     if '.csv' not in filename:
         filename += '.csv'
@@ -127,13 +129,13 @@ def filled_in_form(filename, devicenametosubobj):
             headers.append('part stop')
         # writing headers
         writer.writerow(headers)
-        if devicenametosubobj is None:
+        if list_of_sub_objects is None:
             pass
         else:
-            for devicename in devicenametosubobj:
-                linetowrite = devicenametosubobj[devicename].generate_csv_line()
+            for sub_object in list_of_sub_objects:
+                linetowrite = sub_object.generate_csv_line()
                 writer.writerow(linetowrite)
 
 
 def blank_form(filename):
-    filled_in_form(filename, devicenametosubobj=None)
+    filled_in_kinefold_form(filename, list_of_sub_objects=None)

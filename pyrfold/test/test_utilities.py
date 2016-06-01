@@ -41,6 +41,41 @@ class Random_sequenceTestFunction(unittest.TestCase):
                     self.assertEqual(len(output), length)
 
 
+class RNA_sequences_complementaryTestFunction(unittest.TestCase):
+    def setUp(self):
+        self.inputs = [['AUAGCAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUGCUAU', True],
+                       ['AUAGCAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUGCUAU', False],
+                       ['AUAGCAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUCCUAU', False],
+                       ['AUAGCAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUCCUAU', True],
+                       ['AUAGUAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUGCUAU', True],
+                       ['AUAGUAUAGUAUCAUUGAUCUAGU',
+                        'ACUAGAUCAAUGAUACUAUGCUAU', False]]
+
+        self.outputs = [True, True, False, False, True, False]
+
+        self.inputerrors = [['AUAGCAUAGUAUCAUUGAUCUAGU',
+                             'GAUCAAUGAUACUAUGCUAU', True],
+                            ['AUAGCAUAUCAUUGAUCUAGU',
+                             'ACUAGAUCAAUGAUACUAUGCUAU', False]]
+
+
+    def test_RNA_sequences_complementary(self):
+        for inputs, output in zip(self.inputs, self.outputs):
+            self.assertEqual(utilities.RNA_sequences_complementary(inputs[0],
+                                                                   inputs[1],
+                                                                   inputs[2]),
+                             output)
+        for inputs in self.inputerrors:
+            self.assertRaises(ValueError, utilities.RNA_sequences_complementary,
+                              inputs[0], inputs[1], inputs[2])
+
+
+
 class Reverese_ComplementTestFunction(unittest.TestCase):
 
     def setUp(self):

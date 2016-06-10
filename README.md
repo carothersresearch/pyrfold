@@ -1,20 +1,22 @@
 pyrfold
 =======
-v0.1.6
+v0.2.0
 
 ## Requirments:
 ```
+_PYTHON packages_
 pandas
-(From terminal)
-pip install pandas
+numpy
+scipy
 
+_OTHER packages_
 viennaRNA
 ```
 
 ## Turorials:
 ```
-TODO:
-New tutorial notebook needs to be made
+You can find Jupyter tutorial notebooks covering basic functionality in the
+`/docs/` directory
 ```
 
 ## Clone
@@ -24,6 +26,5 @@ git clone https://github.com/carothersresearch/pyrfold.git
 ## TODO
 ```
 * Hyak Processing - print error output somewhere that isn't deleted
-* Hyaksubobj - make easier to construct parts in
-* Tutorials - make them
+
 ```

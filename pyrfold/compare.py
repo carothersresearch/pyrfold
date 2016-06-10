@@ -17,7 +17,7 @@ Things TODO
 ############################ Modules ###################################
 ########################################################################
 def folding_frequency(referencepartdict, experimentpartdict, foldcutoff=0.0,
-                        dominantstructure=False):
+                      dominantstructure=False):
     """Compares experimentaldata to reference data to determine a realtive
     level of folding
     :param referencepartdict: a finalstructure dictionary like object that

@@ -12,10 +12,13 @@ import random
 devnull = open(os.devnull, 'w')
 
 
-#First the location of the kinefold biany needs to be found
-path_to_kinefold = os.path.join(os.path.dirname((os.path.realpath(__file__))),
-                                'applications',
-                                'kinefold_long_static')
+# First the location of the kinefold biany needs to be found
+# path_to_kinefold = os.path.join(os.path.dirname((os.path.realpath(__file__))),
+#                                 'applications',
+#                                 'kinefold_long_static')
+
+path_to_kinefold = \
+    "/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static"
 
 class Kinefold():
     """
@@ -151,7 +154,7 @@ def write_req_files(parmdirectory, outputpath, datdirectory, listofdevices,
                 for forc in forcedhelixes:
                     f.write('\n' + 'F ' + str(forc[0]) + ' ' + str(forc[1]) +
                                                          ' ' + str(forc[2]))
-                #filename and filename.zip
+                # filename and filename.zip
                 f.write('\n' + devicename + '\n' + devicename + '.zip' + '\n')
 
 

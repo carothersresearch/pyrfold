@@ -6,7 +6,8 @@ import random
 import copy
 from ..utilities import convert_to_RNA, random_sequence, \
                         RNA_sequences_complementary, \
-                        randomly_substitue_u_for_c, RNAsequence
+                        randomly_substitue_u_for_c, RNAsequence, \
+                        reverse_complement
 from ..foldingsub import FoldingSubData
 
 # UNIT TESTED CODE
@@ -30,11 +31,63 @@ class Device(object):
         self.parttoposition = {}
         self.parttosequence = {}
         self.sequence = ''
+
+        # should also have Unpaired and helix list
+        self.helix_list = []
+        self.unpaired_list = []
+
         # Make dictionary of partname to sequence and partname to sequence
         self.update_part_index_and_sequence_dict()
 
     def __str__(self):
         return convert_to_RNA(self.sequence)
+
+    def add_helix_part(self, helix, partnames):
+        """
+        Define the sequence of two parts of the RNA Device with a helix
+        object. This will be useful in randomizing sequences of the device.
+
+        :param helix: Helix object with the specified characteristics of
+            the parts you want.
+        :type helix: Helix object
+        :param partnames: This is list of TWO partnames the helix will object
+            will be mapped to.
+        :type partnames: list of str
+        """
+        to_add = copy.copy(helix)
+        self.helix_list.append((partnames, to_add))
+        self.change_part_sequence(partnames[0], to_add.helix0)
+        self.change_part_sequence(partnames[1], to_add.helix1)
+
+    def add_unpaired_part(self, unpaired, partname):
+        """
+        Define the sequence of one part of the RNA Device with an unpaired
+        object. This will be useful in randomizing sequences of the device.
+
+        :param helix: Helix object with the specified characteristics of
+            the parts you want.
+        :type helix: Helix object
+        :param partnames: This is list of TWO partnames the helix will object
+            will be mapped to.
+        :type partnames: list of str
+        """
+        # to_add = copy.copy(unpaired)
+        to_add = unpaired
+        self.unpaired_list.append(to_add)
+        self.change_part_sequence(partname, to_add)
+
+    def randomize_parts(self):
+        """
+        This will randomize all of the RNA Helix and Unpaired parts that
+        compose this device
+        """
+        for partnames, helix in self.helix_list:
+            helix.randomize()
+            self.change_part_sequence(partnames[0], helix.helix0)
+            self.change_part_sequence(partnames[1], helix.helix1)
+        for unpaired in self.unpaired_list:
+            unpaired.randomize()
+        self.update_part_index_and_sequence_dict()
 
     def change_part_sequence(self, partname, sequence):
         partindex = self.partnamelist.index(partname)
@@ -79,8 +132,65 @@ class Device(object):
             listofindexs.append([leftindex, rightindex])
             leftindex = rightindex
         self.parttoposition = dict(zip(self.partnamelist, listofindexs))
-        self.parttosequence = dict(zip(self.partnamelist, [seq.upper() for seq in self.sequencelist]))
-        self.sequence = ''.join(self.sequencelist)
+        self.parttosequence = dict(zip(self.partnamelist, [str(seq).upper() for seq in self.sequencelist]))
+        self.sequence = ''
+        for part_sequence in self.sequencelist:
+            self.sequence += str(part_sequence)
+
+    def return_parts_sequences(self):
+        """
+        Returns a list of the parts and sequences used to define a sequence
+        """
+        return ([str(name) for name in self.partnamelist],
+                [str(sequence) for sequence in self.sequencelist])
+
+    def return_windowed_sequence(self, fiveprimeshift=None,
+                                 fiveprimerefpart=None,
+                                 threeprimeshift=None,
+                                 threeprimerefpart=None):
+        """
+        A function which will return a sequence that has been truncated
+        based on specificaitons provided
+        """
+
+        windowstart_0 = 0
+        windowstop_0 = len(self.sequence) + 1
+
+        if fiveprimeshift:
+            if fiveprimerefpart:
+                # need an index
+                start, stop = self.parttoposition[fiveprimerefpart]
+            else:
+                # if partcontexttofold == 'all':
+                #     # Just grab the outside part
+                #     start, stop = self.parttoposition[self.partnamelist[0]]
+                # else:
+                start, stop = self.parttoposition[self.partnamelist[0]]
+            # We have the start stop of the device that we'll make the decision
+            # on so now we have to shift everything
+            # We are going to shift based on the fiveprime side of this
+            rel_shift_index = start + fiveprimeshift
+
+            windowstart_0 += rel_shift_index
+
+        if threeprimeshift:
+            if threeprimerefpart:
+                # need an index
+                start, stop = self.parttoposition[threeprimerefpart]
+            else:
+                # if partcontexttofold == 'all':
+                #     # Just grab the outside part
+                #     start, stop = self.parttoposition[self.partnamelist[-1]]
+                # else:
+                start, stop = self.parttoposition[self.partnamelist[-1]]
+            # We have the start stop of the device that we'll make the decision
+            # on so now we have to shift everything
+            # We are going to shift based on the fiveprime side of this
+            rel_shift_index = stop + threeprimeshift
+
+            windowstop_0 = rel_shift_index
+
+        return self.sequence[windowstart_0:windowstop_0]
 
     def create_kinefold_submission_object(self, device_name,
                                           partcontexttofold='all',
@@ -150,8 +260,8 @@ class Device(object):
         :type helix_min_free_engery: float
         """
         # First create the name of the simulation object
-        top_character = '#'
-        bottom_character = '&'
+        top_character = '---'
+        bottom_character = '#'
 
         def additional_element_to_name(class_name, value,
                                        top_character=top_character,
@@ -298,53 +408,97 @@ class Helix(object):
     """This class will simply keep track of two sides of helix and
     autoamtically generate one half based on the other half
     """
-    def __init__(self, helix0='', helix1=''):
-        """helix0 and helix1 are the left and right half of a helix
+    def __init__(self, helix0='', helix1='', size_range=None,
+                 GC_range=None):
         """
-        self.helixes = [helix0, helix1]
+        helix0 and helix1 are the left and right half of a helix.
+        :param helix0: RNA sequence of the 5' strand of helix
+        :type helix0: str
+        :param helix1: RNA sequence of the 3' strand of helix
+        :type helix1: str
+        """
+        self.helix0 = RNAsequence(helix0)
+        self.helix1 = RNAsequence(helix1)
+        self.sizerange = size_range
+        self.gcrange = GC_range
 
-    def generate_helix(self, based_on_half, random_sub_u_for_c=False):
-        """ this will synthesize the other half of the helix based on
-        the squence based on the other half """
-        templatehelix = RNAsequence(self.helixes[based_on_half])
-        templatehelix.reverse_complement()
-        rev_comp = templatehelix.sequence
+    def generate_helix(self, from_helix_half, random_sub_u_for_c=False):
+        """
+        This creates a new helix half based on the sequence of a
+        helix that was previously entered.
+        :param from_helix_half: Either 0 or 1 for the 5' or 3' helix half
+            to base the other half on.
+        :type from_helix_half: int
+        :param random_sub_u_for_c: Should 'U' bases be randomly submitted
+            in place of 'C' for the helix compliment. If not False, a
+            frequency of substitution should be included.
+        :type random_sub_u_for_c: bool or float
+        """
+        if from_helix_half == 0:
+            templatehelix = self.helix0
+        elif from_helix_half == 1:
+            templatehelix = self.helix1
+        else:
+            raise IndexError
+            print "Requested helix half not 0 or 1"
+
+        rev_comp = reverse_complement(templatehelix)
 
         if random_sub_u_for_c:
-            rev_comp = randomly_substitue_u_for_c(rev_comp, probability=0.5)
-        if based_on_half == 0:
-            self.helixes[1] = rev_comp
-        else:
-            self.helixes[0] = rev_comp
+            rev_comp = randomly_substitue_u_for_c(rev_comp,
+                                                  random_sub_u_for_c)
 
-    def randomize_helix(self, sizerange, random_sub_u_for_c=False):
-        """This will generate a random helix """
-        self.size = random.choice(range(sizerange[0],
-                                        sizerange[1] + 1))
-        self.helixes[0] = random_sequence(self.size)
-        self.generate_helix(self, random_sub_u_for_c=False)
+        if from_helix_half == 0:
+            self.helix1 = rev_comp
+        else:
+            self.helix0 = rev_comp
+
+    def randomize(self, random_sub_u_for_c=False):
+        """
+        This will generate a random helix (both the 5' and 3' half).
+
+        :param random_sub_u_for_c: Should 'U' bases be randomly submitted
+            in place of 'C' for the helix compliment. If not False, a
+            frequency of substitution should be included.
+        :type random_sub_u_for_c: bool or float
+        """
+        self.size = random.choice(range(self.sizerange[0],
+                                        self.sizerange[1] + 1))
+        self.helix0 = random_sequence(self.size, GC_range=self.gcrange,
+                                      strand_type='RNA')
+        self.generate_helix(from_helix_half=0,
+                            random_sub_u_for_c=random_sub_u_for_c)
 
 
 class Unpaired(object):
     """This class will have the basic functionality of making unpaired
     sequences specifically with random generation in mind
-    :param sizerange: The lower and upper bound of size of a given sequence
-    :type sizerange: A list of two ints.
-    :param GC_range: The lower and upper bounds of GC fraction allowed
-    :type GC_range: A list of two ints
     """
     def __init__(self, size_range, sequence='', GC_range=None):
+        """
+        :param sizerange: The lower and upper bound of size of a given sequence
+        :type sizerange: A list of two ints.
+        :param GC_range: The lower and upper bounds of GC fraction allowed
+        :type GC_range: A list of two ints
+        """
         self.sequence = sequence
         self.size = None
         self.sizerange = size_range
         self.gcrange = GC_range
 
+    def __repr__(self):
+        return 'unpa.' + self.sequence
+
     def __str__(self):
         return self.sequence
 
-    def generate_random_sequence(self):
+    def __len__(self):
+        return len(self.sequence)
+
+    def randomize(self):
         """
-        Randomly creates a sequence based on requirements
+        Randomly creates a sequence based on requirements assigned
+        at object initilization.
         """
         self.size = random.choice(range(self.sizerange[0],
                                         self.sizerange[1] + 1))

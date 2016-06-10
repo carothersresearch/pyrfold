@@ -13,10 +13,12 @@ devnull = open(os.devnull, 'w')
 
 
 # First the location of the kinefold biany needs to be found
-path_to_kinefold = os.path.join(os.path.dirname((os.path.realpath(__file__))),
-                                'applications',
-                                'kinefold_long_static')
+# path_to_kinefold = os.path.join(os.path.dirname((os.path.realpath(__file__))),
+#                                 'applications',
+#                                 'kinefold_long_static')
 
+path_to_kinefold = \
+    "/gscratch/rna/compiled_binaries/kinefold/kinefold_long_static"
 
 class Kinefold():
     """

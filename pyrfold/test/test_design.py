@@ -19,6 +19,51 @@ class Device_testcase(unittest.TestCase):
 
         self.assertEqual(combined_string, str(self.init_obj))
 
+    def test_return_windowed_sequence(self):
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=None,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=None,
+                                        threeprimerefpart=None)
+        self.assertEqual(self.init_obj.sequence, test_sequence)
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=5,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=None,
+                                        threeprimerefpart=None)
+        self.assertEqual('U'+'ACCGGGAGA'+'GGGG'+'ACAUAC',
+                         test_sequence)
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=5,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=-1,
+                                        threeprimerefpart=None)
+        self.assertEqual('U'+'ACCGGGAGA'+'GGGG'+'ACAUA',
+                         test_sequence)
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=5,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=-3,
+                                        threeprimerefpart=None)
+        self.assertEqual('U'+'ACCGGGAGA'+'GGGG'+'ACA',
+                         test_sequence)
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=5,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=3,
+                                        threeprimerefpart='test3')
+        self.assertEqual('U'+'ACCGGGAGA'+'GGGG'+'ACA',
+                         test_sequence)
+        test_sequence = self.init_obj.return_windowed_sequence(
+                                        fiveprimeshift=5,
+                                        fiveprimerefpart=None,
+                                        threeprimeshift=-2,
+                                        threeprimerefpart='test3')
+        self.assertEqual('U'+'ACCGGGAGA'+'GG',
+                         test_sequence)
+
+
+
     def test_change_part(self):
         part_to_change = 'test2'
         part_sequence = 'AGAGA'
@@ -71,7 +116,7 @@ class Device_testcase(unittest.TestCase):
                                                     partcontexttofold,
                                                     partstofold)
 
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'
 
         self.assertEqual(expected_name, test_obj.name)
         self.assertEqual(self.init_obj.sequence, test_obj.sequence)
@@ -167,9 +212,9 @@ class Device_testcase(unittest.TestCase):
         threeprimerefpart = None
         partcontexttofold = ['test2', 'test3', 'test4']
         partstofold = None
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
-            '#five_prime_shift&2#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'+\
+            '---five_prime_shift#2---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -238,9 +283,9 @@ class Device_testcase(unittest.TestCase):
         partcontexttofold = 'all'
         partstofold = None
 
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
-            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'+\
+            '---five_prime_shift#-4---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -269,9 +314,10 @@ class Device_testcase(unittest.TestCase):
         partcontexttofold = ['test2', 'test3', 'test4']
         partstofold = None
 
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
-            '#five_prime_shift&-4#rel_five_prime_part&test3' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'+\
+            '---five_prime_shift#-4---rel_five_prime_part#test3' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4'
+
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -301,10 +347,10 @@ class Device_testcase(unittest.TestCase):
         partcontexttofold = 'all'
         partstofold = ['test3']
 
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
-            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
-            '#part_to_fold&test3'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'+\
+            '---five_prime_shift#-4---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4' + \
+            '---part_to_fold#test3'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -328,10 +374,10 @@ class Device_testcase(unittest.TestCase):
         partcontexttofold = 'all'
         partstofold = ['test3', 'test4']
 
-        expected_name = 'dev&'+device_name+'#pol&30#fold_time_after&1'+\
-            '#five_prime_shift&-4#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
-            '#part_to_fold&test3#part_to_fold&test4'
+        expected_name = 'dev#'+device_name+'---pol#30---fold_time_after#1'+\
+            '---five_prime_shift#-4---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4' + \
+            '---part_to_fold#test3---part_to_fold#test4'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -364,9 +410,9 @@ class Device_testcase(unittest.TestCase):
         pseudoknots = 0
         entanglements = 0
 
-        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
-            '#five_prime_shift&2#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4'
+        expected_name = 'dev#'+device_name+'---anneal_time#10' + \
+            '---five_prime_shift#2---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -398,10 +444,10 @@ class Device_testcase(unittest.TestCase):
         pseudoknots = 1
         entanglements = 0
 
-        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
-            '#five_prime_shift&2#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
-            '#pseudoknots&True'
+        expected_name = 'dev#'+device_name+'---anneal_time#10' + \
+            '---five_prime_shift#2---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4' + \
+            '---pseudoknots#True'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -433,10 +479,10 @@ class Device_testcase(unittest.TestCase):
         pseudoknots = 1
         entanglements = 1
 
-        expected_name = 'dev&'+device_name+'#anneal_time&10' + \
-            '#five_prime_shift&2#rel_five_prime_part&test2' + \
-            '#three_prime_shift&-3#rel_three_prime_part&test4' + \
-            '#pseudoknots&True' + '#entanglements&True'
+        expected_name = 'dev#'+device_name+'---anneal_time#10' + \
+            '---five_prime_shift#2---rel_five_prime_part#test2' + \
+            '---three_prime_shift#-3---rel_three_prime_part#test4' + \
+            '---pseudoknots#True' + '---entanglements#True'
 
         test_obj = self.init_obj.create_kinefold_submission_object(
                                                     device_name,
@@ -467,24 +513,33 @@ class Helix_testcase(unittest.TestCase):
     def setUp(self):
         self.list_of_helix_helix0 = ['ACGACUGU', 'ACGUACGUAU', 'ACGAUCGGACG']
         self.list_of_helix_helix1 = ['ACAGUCGU', 'AUACGUACGU', 'CGUCCGAUCGU']
+        self.list_of_sizes = [(4, 10), (5, 11), (5,5)]
 
     def test_generate_helix(self):
         for helix0, helix1 in zip(self.list_of_helix_helix0,
                                   self.list_of_helix_helix1):
 
             test_obj = RNA.Helix(helix0=helix0)
-            test_obj.generate_helix(based_on_half=0)
-            self.assertEqual(test_obj.helixes[1], helix1)
-            test_obj.generate_helix(based_on_half=0, random_sub_u_for_c=True)
-            self.assertTrue(RNA_sequences_complementary(test_obj.helixes[0],
-                                                        test_obj.helixes[1]))
+            test_obj.generate_helix(from_helix_half=0)
+            self.assertEqual(test_obj.helix1, helix1)
+            test_obj.generate_helix(from_helix_half=0, random_sub_u_for_c=0.5)
+            self.assertTrue(RNA_sequences_complementary(test_obj.helix0,
+                                                        test_obj.helix1))
 
             test_obj = RNA.Helix(helix1=helix1)
-            test_obj.generate_helix(based_on_half=1)
-            self.assertEqual(test_obj.helixes[0], helix0)
-            test_obj.generate_helix(based_on_half=1, random_sub_u_for_c=True)
-            self.assertTrue(RNA_sequences_complementary(test_obj.helixes[0],
-                                                        test_obj.helixes[1]))
+            test_obj.generate_helix(from_helix_half=1)
+            self.assertEqual(test_obj.helix0, helix0)
+            test_obj.generate_helix(from_helix_half=1, random_sub_u_for_c=0.9)
+            self.assertTrue(RNA_sequences_complementary(test_obj.helix0,
+                                                        test_obj.helix1))
+
+    def test_randomize(self):
+        for sizes in self.list_of_sizes:
+            test_obj = RNA.Helix(size_range=sizes)
+            test_obj.randomize()
+            self.assertTrue(len(test_obj.helix0) == len(test_obj.helix1))
+            self.assertTrue(RNA_sequences_complementary(test_obj.helix0,
+                                                        test_obj.helix1))
 
 
 class Unpaired_testcase(unittest.TestCase):
@@ -499,7 +554,7 @@ class Unpaired_testcase(unittest.TestCase):
 
                 test_obj = RNA.Unpaired(size_range=size_range,
                                         GC_range=gc_range)
-                test_obj.generate_random_sequence()
+                test_obj.randomize()
 
 
                 self.assertTrue((size_range[0] <= len(str(test_obj))) &

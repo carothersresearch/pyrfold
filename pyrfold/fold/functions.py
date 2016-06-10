@@ -4,7 +4,7 @@ This script contains functions which are useful for RNA folding devices
 from .vienna import Vienna
 
 
-def structure_seen_in_mfe(sequence, mfe_structures, region=None, temp=37):
+def structures_seen_in_mfe(sequence, mfe_structures, region=None, temp=37):
     """Will fold a sequence using vienna package and look through the list
     of MFE_structures are given to see if those structures exist
 

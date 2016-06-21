@@ -1,6 +1,6 @@
 pyrfold
 =======
-v0.2.0
+v0.2.0_RNADevice_improvement_1
 
 ## Requirments:
 ```

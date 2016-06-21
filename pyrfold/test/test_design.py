@@ -2,6 +2,10 @@ import unittest
 from pyrfold.design import RNA
 from pyrfold.utilities import RNA_sequences_complementary, GC_content
 
+"""
+NOTES
+Need to create a randomize test case for the RNAdevice call.
+"""
 
 class Device_testcase(unittest.TestCase):
 

@@ -1,6 +1,24 @@
 """
 This module should aide in the design of RNAdevices for the design of
 RNAparts and devices.
+
+Notes about expanding the functionality of the device. I think it could be
+useful to provide a specificpartname list to the device. So that it is possible
+to name the specific version of a part that is being used. For example
+
+the aptazyme part could be one of 4 specific rna devices...
+
+===============
+Need to make the table of devices that is stored be more descriptive
+
+======
+Need to add error conditions for trying to randomize parts that don't
+exist within a device
+
+========
+Need to write test code for randomizing parts
+
+
 """
 import random
 import copy
@@ -73,23 +91,45 @@ class Device(object):
         """
         # to_add = copy.copy(unpaired)
         to_add = unpaired
-        self.unpaired_list.append(to_add)
+        self.unpaired_list.append((partname, to_add))
         self.change_part_sequence(partname, to_add)
 
-    def randomize_parts(self):
+    def randomize_parts(self, list_of_parts='all'):
         """
         This will randomize all of the RNA Helix and Unpaired parts that
         compose this device
         """
-        for partnames, helix in self.helix_list:
-            helix.randomize()
-            self.change_part_sequence(partnames[0], helix.helix0)
-            self.change_part_sequence(partnames[1], helix.helix1)
-        for unpaired in self.unpaired_list:
-            unpaired.randomize()
+        if list_of_parts == 'all':
+            for partnames, helix in self.helix_list:
+                helix.randomize()
+                self.change_part_sequence(partnames[0], helix.helix0)
+                self.change_part_sequence(partnames[1], helix.helix1)
+            for partname, unpaired in self.unpaired_list:
+                unpaired.randomize()
+                # I think this might be unnecessary
+                self.change_part_sequence(partname, unpaired)
+
+        else:
+            for partnames, helix in self.helix_list:
+                for partname in partnames:
+                    if partname in list_of_parts:
+                        helix.randomize()
+                        self.change_part_sequence(partnames[0], helix.helix0)
+                        self.change_part_sequence(partnames[1], helix.helix1)
+
+            for partname, unpaired in self.unpaired_list:
+                if partname in list_of_parts:
+                    unpaired.randomize()
+                    # I think this might be unnecessary
+                    self.change_part_sequence(partname, unpaired)
+
         self.update_part_index_and_sequence_dict()
 
     def change_part_sequence(self, partname, sequence):
+        """
+        Perminently changes the sequence of a static part
+
+        """
         partindex = self.partnamelist.index(partname)
         self.sequencelist[partindex] = sequence
         self.update_part_index_and_sequence_dict()
@@ -109,7 +149,9 @@ class Device(object):
         self.update_part_index_and_sequence_dict()
 
     def remove_part(self, partname):
-        """finds the part that is requested and removes it from the partnamelist"""
+        """
+        finds the part that is requested and removes it from the partnamelist
+        """
         partindex = self.partnamelist.index(partname)
         self.partnamelist.pop(partindex)
         self.sequencelist.pop(partindex)
@@ -150,7 +192,9 @@ class Device(object):
                                  threeprimerefpart=None):
         """
         A function which will return a sequence that has been truncated
-        based on specificaitons provided
+        based on specificaitons provided.
+
+        Need to have a call for the part sequence thta can be used too
         """
 
         windowstart_0 = 0

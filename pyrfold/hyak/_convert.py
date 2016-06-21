@@ -15,17 +15,20 @@ helix are removed
 - This continues until it's complete
 """
 
+
 class KineRmnOutput:
     """Class to store .rnm file that comes from kinefold into useable
     data
     """
     def __init__(self, line):
-        #This is a structure line
+        # This is a structure line
+
         self.helix = ''
         self.sequence = ''
         self.dotbracket = ''
         if "bases" in line:
-            #This is cotrans line
+            # This is cotrans line
+
             self.structure = line.split('     ')[0].strip()
             self.time = (float(line.split('     ')[1].
                 split(' reached after ')[1].split(' ms')[0].strip()))

@@ -57,8 +57,12 @@ else:
     SUBSUMMARYDATA = pyrfile.load_pickled_sub_summary(SUBSUMMARYFILE)
     # Now that we have the kinsuboj file we can do work on it
 
+    # STEP 0 Create a tempoary folder in the temp directory
+    temp_directory = os.path.join(tempfilepath, name)
+    os.makedirs(temp_directory)
+
     # STEP 1 Write the dat file
-    dat_path = kinefold.write_dat_files(tempfilepath, [name], nametokinesubobj,
+    dat_path = kinefold.write_dat_files(temp_directory, [name], nametokinesubobj,
                                         return_path=True)
 
     # STEP 2 make directory for all simulation data (in the output folder)
@@ -66,9 +70,9 @@ else:
     os.mkdir(rawdataoutput)
 
     # STEP 3 Make and run all require REQ files (in the output folder)
-    kinefold.write_req_files(tempfilepath, outputfilepath, tempfilepath,
+    kinefold.write_req_files(temp_directory, outputfilepath, temp_directory,
                              [name], nametokinesubobj, wrapper_run=False)
-    kinefold.run_simulations(tempfilepath, name)
+    kinefold.run_simulations(temp_directory, name)
 
     # STEP 4 Delete all unneeded data (in the output folder and temp)
     hyakp.clean_up_output_data(rawdataoutput, singlefile=True)
@@ -79,3 +83,6 @@ else:
 
     # STEP 6 Compress output/device data
     hyakp.compress_and_delete_directory(rawdataoutput)
+
+    # STEP 7 Delete the temp data
+    shutil.rmtree(temp_directory)

@@ -234,7 +234,8 @@ def create_finalpart_dict(timecoursedict, dictofparts=None):
 ###############################################################################
 ###############################################################################
 # CONSOLIDATE RUN DICTIONARY BLOCK START
-###############################################################################
+###############################
+################################################
 ###############################################################################
 def consolidate_run_dictionary(rundictionary, polrate=None):
     """ This function will distill a run dictionary into a very basic dictionary

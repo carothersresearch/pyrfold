@@ -18,6 +18,9 @@ exist within a device
 ========
 Need to write test code for randomizing parts
 
+=========
+
+FIX window part for when the reference part 3 shift is 0
 
 """
 import random

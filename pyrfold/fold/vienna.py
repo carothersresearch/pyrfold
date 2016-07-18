@@ -30,24 +30,33 @@ def pass_arguemnt_to_Vienna(argument, input_data):
     return output
 
 
-def mfe_plus(sequence, temp):
+def mfe_plus(sequence, temp, constraint_structure=None):
     """
     Function will pass a given structure to RNAfold and return the partition
-    function Right now this is using all of the defaults for solving
-     structures.
+    function right now this is using all of the defaults for solving
+    the structures.
+
     :param seqeunce:
     :type sequence:
     :param temperature:
     :type temperature:
+    :param constraint_structure:
+    :type constraint_structure:
     :returns: The mfe structure, the mfe energy (kcal/mol),
               ensemble energy (kcal/mol), the frequency of the MFE structure
               in ensemble
     :rtype: (str, float, float, float)
     """
     ARGUMENT = ['RNAfold', '-T', str(temp), '-p0', '--noPS']
-    output = pass_arguemnt_to_Vienna(ARGUMENT, sequence)
+    input_data = sequence
+    if constraint_structure:
+        ARGUMENT.append('-C')
+        ARGUMENT.append('--enforceConstraint')
+        input_data += '\n' + constraint_structure
+    output = pass_arguemnt_to_Vienna(ARGUMENT, input_data)
+
     mfe_structure = output.split('\n')[1].split(' ')[0]
-    mfe_energy = float(output.split('\n')[1].split(' ')[1].split('(')[1].split(')')[0])
+    mfe_energy = float(''.join(output.split('\n')[1].split(' ')[1:]).split('(')[1].split(')')[0])
     energy_of_ensemble = float(output.split('\n')[2].split('= ')[1].split(' kcal')[0])
     frequency_of_mfe_structure = float(output.split('\n')[3].split(';')[0].split(' ')[-1])
 

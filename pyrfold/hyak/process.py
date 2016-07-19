@@ -118,12 +118,9 @@ def timecourse(rawoutputfolder, processeddirectory, subsummarydict=None,
             with open(temppickledest, 'wb') as topick:
                 pickle.dump(dicttopickle, topick, protocol=2)
         # Now to generate the compressed version of this dictionary
-
-        # Converting these to ints
-
         if subsummarydict:
             polrate = subsummarydict[directoryname].kine_folding_data()[0]
-            polrate = int(polrate*10)
+            polrate = np.round(polrate, 1)
         else:
             polrate = None
         temprundict, baseadditiontime, completesequence, simulation_type = \
@@ -237,7 +234,8 @@ def create_finalpart_dict(timecoursedict, dictofparts=None):
 ###############################################################################
 ###############################################################################
 # CONSOLIDATE RUN DICTIONARY BLOCK START
-###############################################################################
+###############################
+################################################
 ###############################################################################
 def consolidate_run_dictionary(rundictionary, polrate=None):
     """ This function will distill a run dictionary into a very basic dictionary
@@ -245,10 +243,6 @@ def consolidate_run_dictionary(rundictionary, polrate=None):
     are observed at various times
     :param rundictionary: Dictionary that hyak processing produces
     """
-    for num in rundictionary:
-        for index, time in enumerate(rundictionary[num]['time']):
-            rundictionary[num]['time'][index] = int(time*10)
-
     #First calcualte the pol rate and base timeline
     timebofbaseadition, timeline, sequence, simulation_type = calculate_pol_rate(rundictionary,
                                                         polrate)
@@ -268,12 +262,12 @@ def change_duplicate_time_points(dictionaryofruns):
     identical"""
     for runnumber in dictionaryofruns:
         timelist = dictionaryofruns[runnumber]['time']
-        previoustime = -1
+        previoustime = -0.1
         for index, time in enumerate(timelist):
             currenttime = time
             if previoustime == currenttime:
                 # need to shift current time up
-                timelist[index] += 1
+                timelist[index] += 0.1
             previoustime = currenttime
         # dictionaryofruns[runnumber]['time'] = TIMELIST
     return dictionaryofruns
@@ -293,8 +287,7 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
     simulation_type = 'cotrans'
 
     if polrate is not None:
-        # Converting to ints for the remainder fo these calculations
-        timeofbaseaddition = int(np.round(polrate, 1)*10)
+        timeofbaseaddition = np.round(polrate, 1)
         for runnumber in dictionaryofruns:
             if dictionaryofruns[runnumber]['sequence']:
                 sequence = dictionaryofruns[runnumber]['sequence']
@@ -336,8 +329,6 @@ def calculate_pol_rate(dictionaryofruns, polrate=None):
                     break
         timeofbaseaddition = np.round(np.mean(timeofbaseaddition), 1)
         #Make the timeline
-
-    timeofbaseaddition = int(timeofbaseaddition)
 
     if simulation_type == 'cotrans':
         timeline = []
@@ -396,7 +387,7 @@ def rescale_time_vector(timelist, dotbracketlist, timeline):
                 timelist[new_count] += diff_last_add
 #                 print timelist[new_count]
             break
-    return np.array(timelist)  # np.around(timelist, decimals=1)
+    return np.around(timelist, decimals=1)
 
 
 def adjust_time_window(timelist, indexstart, indexstop, size, timeline):
@@ -441,17 +432,15 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence,
     energydict = {}
     timearray = calculate_time_list(rundictionary, baseadditiontime,
                                     simulation_type)
-    baseadditiontime = baseadditiontime/10.0
     #Initialize the dictionary
     for time in timearray:
         dotdict[time] = Counter()
     maxtime = timearray[-1]
     for runnumber in rundictionary:
-        # print runnumber
+        #print runnumber
         temptimelist = rundictionary[runnumber]['time']
-        temptimelist = np.array(temptimelist)/10.0
         totalnumber = len(temptimelist)
-        # add unstructured sequences structures where appropriate
+        #add unstructured sequences structures where appropriate
         mintime = temptimelist[0]
         # numberofsinglebasestoadd = int(mintime/baseadditiontime)
         previousbasecountindex = 0
@@ -461,12 +450,13 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence,
             for basecount in range(numberofsinglebasestoadd):
                 temptime1 = find_nearest(timearray, basecount * baseadditiontime)
                 temptime2 = find_nearest(timearray,
-                                         (basecount + 1) * baseadditiontime)
+                                        (basecount + 1) * baseadditiontime)
                 structure = '.'*(basecount + 1)
                 dotdict, previousbasecountindex = add_structure_timedictionary(dotdict, structure,
                             [temptime1, temptime2], previousbasecountindex)
                 add_energy_data(energydict, structure, energy=0)
 
+        #print 'initial stuff added'
         #add all of the other structures
         for counter, time in enumerate(temptimelist):
             structure = rundictionary[runnumber]['dotbracket'][counter]
@@ -479,17 +469,13 @@ def compress_run_dictionary(rundictionary, baseadditiontime, completesequence,
             dotdict, previousbasecountindex  = add_structure_timedictionary(dotdict, structure,
                             [currenttime, nexttime], previousbasecountindex)
             energydict = add_energy_data(energydict, structure, energy)
-
-    # convert all of time the dictionary to
-    outdict = {}
+    outdict  = {}
     dotdict = normailize_orderddict_counters(dotdict)
     outdict['dotbracket'] = dotdict
     outdict['energy'] = energydict
     outdict['sequence'] = completesequence
     outdict['baseadditiontime'] = baseadditiontime
     return outdict
-
-
 
 
 def find_nearest(array, value):
@@ -546,12 +532,12 @@ def calculate_time_list(dictofruns, baseaddition, simulation_type):
         outlist = list(timepointstoadd)
     else:
         outlist = []
-    previousstep = -1
+    previousstep = -0.1
     for time in templist:
         if time > previousstep:
             outlist.append(time)
             previousstep = time
-    return np.array(outlist)/10.0
+    return np.array(outlist)
 
 ###############################################################################
 ###############################################################################

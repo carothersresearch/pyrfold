@@ -16,6 +16,53 @@ def version():
     return process.communicate()[0].split('\n')[0].split()[1]
 
 
+def pass_arguemnt_to_Vienna(argument, input_data):
+    """
+    Function passes specifications to Vienna for command line processing
+    of data.
+    :param argument: Specifcaions on how to intialize ViennaRNA.
+    :type argument: list of str
+    :param input_data: Exact data that will be passed to ViennaRNA.
+    :type input_data: list of str
+    """
+    process = Popen(argument, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    output = process.communicate(input=input_data)[0]
+    return output
+
+
+def mfe_plus(sequence, temp, constraint_structure=None):
+    """
+    Function will pass a given structure to RNAfold and return the partition
+    function right now this is using all of the defaults for solving
+    the structures.
+
+    :param seqeunce:
+    :type sequence:
+    :param temperature:
+    :type temperature:
+    :param constraint_structure:
+    :type constraint_structure:
+    :returns: The mfe structure, the mfe energy (kcal/mol),
+              ensemble energy (kcal/mol), the frequency of the MFE structure
+              in ensemble
+    :rtype: (str, float, float, float)
+    """
+    ARGUMENT = ['RNAfold', '-T', str(temp), '-p0', '--noPS']
+    input_data = sequence
+    if constraint_structure:
+        ARGUMENT.append('-C')
+        ARGUMENT.append('--enforceConstraint')
+        input_data += '\n' + constraint_structure
+    output = pass_arguemnt_to_Vienna(ARGUMENT, input_data)
+
+    mfe_structure = output.split('\n')[1].split(' ')[0]
+    mfe_energy = float(''.join(output.split('\n')[1].split(' ')[1:]).split('(')[1].split(')')[0])
+    energy_of_ensemble = float(output.split('\n')[2].split('= ')[1].split(' kcal')[0])
+    frequency_of_mfe_structure = float(output.split('\n')[3].split(';')[0].split(' ')[-1])
+
+    return (mfe_structure, mfe_energy, energy_of_ensemble, frequency_of_mfe_structure)
+
+
 class Vienna(object):
     '''Run Vienna RNA functions on a sequence.'''
     def __init__(self, seqs, dotbrackets=None, constraintstructures=None):

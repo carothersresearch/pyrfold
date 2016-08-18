@@ -189,10 +189,11 @@ class Device(object):
         return ([str(name) for name in self.partnamelist],
                 [str(sequence) for sequence in self.sequencelist])
 
-    def return_windowed_sequence(self, fiveprimeshift=None,
+    def return_windowed_sequence(self,
                                  fiveprimerefpart=None,
-                                 threeprimeshift=None,
-                                 threeprimerefpart=None):
+                                 threeprimerefpart=None,
+                                 fiveprimeshift=None,
+                                 threeprimeshift=None):
         """
         A function which will return a sequence that has been truncated
         based on specificaitons provided.
@@ -203,39 +204,43 @@ class Device(object):
         windowstart_0 = 0
         windowstop_0 = len(self.sequence) + 1
 
+        if fiveprimerefpart:
+            # need an index
+            start, stop = self.parttoposition[fiveprimerefpart]
+        else:
+            # if partcontexttofold == 'all':
+            #     # Just grab the outside part
+            #     start, stop = self.parttoposition[self.partnamelist[0]]
+            # else:
+            start, stop = self.parttoposition[self.partnamelist[0]]
+        # We have the start stop of the device that we'll make the decision
+        # on so now we have to shift everything
+        # We are going to shift based on the fiveprime side of this
         if fiveprimeshift:
-            if fiveprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[fiveprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[0]]
-                # else:
-                start, stop = self.parttoposition[self.partnamelist[0]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
             rel_shift_index = start + fiveprimeshift
+        else:
+            rel_shift_index = start
 
-            windowstart_0 += rel_shift_index
+        windowstart_0 += rel_shift_index
 
+        if threeprimerefpart:
+            # need an index
+            start, stop = self.parttoposition[threeprimerefpart]
+        else:
+            # if partcontexttofold == 'all':
+            #     # Just grab the outside part
+            #     start, stop = self.parttoposition[self.partnamelist[-1]]
+            # else:
+            start, stop = self.parttoposition[self.partnamelist[-1]]
+        # We have the start stop of the device that we'll make the decision
+        # on so now we have to shift everything
+        # We are going to shift based on the fiveprime side of this
         if threeprimeshift:
-            if threeprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[threeprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[-1]]
-                # else:
-                start, stop = self.parttoposition[self.partnamelist[-1]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
             rel_shift_index = stop + threeprimeshift
+        else:
+            rel_shift_index = stop
 
-            windowstop_0 = rel_shift_index
+        windowstop_0 = rel_shift_index
 
         return self.sequence[windowstart_0:windowstop_0]
 

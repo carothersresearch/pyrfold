@@ -34,7 +34,7 @@ def mfe_plus(sequence, temp, constraint_structure=None):
     """
     Function will pass a given structure to RNAfold and return the partition
     function right now this is using all of the defaults for solving
-    the structures.
+    the structures. Additionally it will ENFORCE the constrain folding.
 
     :param seqeunce:
     :type sequence:
@@ -61,6 +61,49 @@ def mfe_plus(sequence, temp, constraint_structure=None):
     frequency_of_mfe_structure = float(output.split('\n')[3].split(';')[0].split(' ')[-1])
 
     return (mfe_structure, mfe_energy, energy_of_ensemble, frequency_of_mfe_structure)
+
+
+def mea_plus(sequence, temp, constraint_structure=None):
+    """
+    This function will return the pairing probablities, centroid structure,
+    MEA structure and other thermodynamic data for a given sequence at a given
+    temperature.
+
+    param seqeunce:
+    :type sequence:
+    :param temperature:
+    :type temperature:
+    :param constraint_structure:
+    :type constraint_structure:
+    :returns: Pairing probablities structure, centroid structure,
+              centroid free energy [kcal/mol], mea_structure,
+              mea_free energy [kcal/mol]
+
+    :rtype: (str, str,  float,  str, float)
+    """
+    ARGUMENT = ['RNAfold', '-T', str(temp), '--MEA', '--noPS']
+    input_data = sequence
+    if constraint_structure:
+        ARGUMENT.append('-C')
+        ARGUMENT.append('--enforceConstraint')
+        input_data += '\n' + constraint_structure
+    output = pass_arguemnt_to_Vienna(ARGUMENT, input_data)
+
+    mfe_structure = output.split('\n')[1].split(' ')[0]
+    mfe_energy = float(''.join(output.split('\n')[1].split(' ')[1:]).split('(')[1].split(')')[0])
+    pairing_probabilities = output.split('\n')[2].split(' ')[0]
+    energy_of_ensemble = float(''.join(output.split('\n')[2].split(' ')[1:]).split('[')[1].split(']')[0])
+    centroid_structure = output.split('\n')[3].split(' ')[0]
+    centroid_free_energy = float(''.join(output.split('\n')[3].split(' ')[1:]).split('d=')[0].split('{')[1])
+    centroid_distance = float(''.join(output.split('\n')[3].split(' ')[1:]).split('d=')[1].split('}')[0])
+    frequency_mfe_in_ensemble = float(output.split('\n')[5].split(';')[0].split(' ')[-1])
+    mea_structure = output.split('\n')[4].split(' ')[0]
+    mea_free_energy = float(''.join(output.split('\n')[4].split(' ')[1:]).split('MEA=')[0].split('{')[1])
+    mea_MEA = float(''.join(output.split('\n')[4].split(' ')[1:]).split('MEA=')[1].split('}')[0])
+
+    return pairing_probabilities, centroid_structure, centroid_free_energy, \
+        mea_structure, mea_free_energy
+
 
 
 class Vienna(object):

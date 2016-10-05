@@ -12,4 +12,4 @@ mea structures
 
 """
 
-__version__ = "0.2.2_b"
+__version__ = "0.2.3"

@@ -24,6 +24,10 @@ FIX window part for when the reference part 3 shift is 0
 
 WEV - I believe this is fixed now 160919
 
+========
+
+WEV - NEED to write testcases for kinefold objects
+
 """
 import random
 import copy

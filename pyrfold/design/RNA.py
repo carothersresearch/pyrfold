@@ -22,6 +22,12 @@ Need to write test code for randomizing parts
 
 FIX window part for when the reference part 3 shift is 0
 
+WEV - I believe this is fixed now 160919
+
+========
+
+WEV - NEED to write testcases for kinefold objects
+
 """
 import random
 import copy
@@ -57,7 +63,7 @@ class Device(object):
         self.helix_list = []
         self.unpaired_list = []
 
-        # Make dictionary of partname to sequence and partname to sequence
+        # Make dictionar y of partname to sequence and partname to sequence
         self.update_part_index_and_sequence_dict()
 
     def __str__(self):
@@ -109,7 +115,7 @@ class Device(object):
                 self.change_part_sequence(partnames[1], helix.helix1)
             for partname, unpaired in self.unpaired_list:
                 unpaired.randomize()
-                # I think this might be unnecessary
+                # might be unnecessary?
                 self.change_part_sequence(partname, unpaired)
 
         else:
@@ -123,7 +129,7 @@ class Device(object):
             for partname, unpaired in self.unpaired_list:
                 if partname in list_of_parts:
                     unpaired.randomize()
-                    # I think this might be unnecessary
+                    # might be unnecessary?
                     self.change_part_sequence(partname, unpaired)
 
         self.update_part_index_and_sequence_dict()
@@ -189,63 +195,96 @@ class Device(object):
         return ([str(name) for name in self.partnamelist],
                 [str(sequence) for sequence in self.sequencelist])
 
-    def return_windowed_sequence(self, fiveprimeshift=None,
+    def return_start_stop_indicies_of_parts(self, fiveprimerefpart=None,
+                                            threeprimerefpart=None,
+                                            fiveprimeshift=None,
+                                            threeprimeshift=None):
+        """
+        A this function will calculate the start and stop indicies
+        of a sequence given input part sequences as well as how they are
+        shifted.
+        """
+        windowstart_0 = 0
+        windowstop_0 = len(self.sequence) + 1
+
+        if fiveprimerefpart:
+            # need an index
+            start, stop = self.parttoposition[fiveprimerefpart]
+        else:
+            # if partcontexttofold == 'all':
+            #     # Just grab the outside part
+            #     start, stop = self.parttoposition[self.partnamelist[0]]
+            # else:
+            start, stop = self.parttoposition[self.partnamelist[0]]
+        # We have the start stop of the device that we'll make the decision
+        # on so now we have to shift everything
+        # We are going to shift based on the fiveprime side of this
+        if fiveprimeshift:
+            rel_shift_index = start + fiveprimeshift
+        else:
+            rel_shift_index = start
+
+        windowstart_0 += rel_shift_index
+
+        if threeprimerefpart:
+            # need an index
+            start, stop = self.parttoposition[threeprimerefpart]
+        else:
+            # if partcontexttofold == 'all':
+            #     # Just grab the outside part
+            #     start, stop = self.parttoposition[self.partnamelist[-1]]
+            # else:
+            start, stop = self.parttoposition[self.partnamelist[-1]]
+        # We have the start stop of the device that we'll make the decision
+        # on so now we have to shift everything
+        # We are going to shift based on the fiveprime side of this
+        if threeprimeshift:
+            rel_shift_index = stop + threeprimeshift
+        else:
+            rel_shift_index = stop
+
+        windowstop_0 = rel_shift_index
+
+        # if (windowstart_0 < 0) or (windowstart_0 > max_window_size):
+        #     raise IndexError
+        #     print "Shifting window outside of sequence"
+
+        # if (windowstop_0 > max_window_size) or (windowstop_0 < 0):
+        #     raise IndexError
+        #     print "Shifting window outside of sequence"
+
+        if windowstart_0 >= windowstop_0:
+            raise IndexError
+            print "Requested windowstart is greater than or equal to" +\
+                " windowstop"
+
+        return (windowstart_0, windowstop_0)
+
+    def return_windowed_sequence(self,
                                  fiveprimerefpart=None,
-                                 threeprimeshift=None,
-                                 threeprimerefpart=None):
+                                 threeprimerefpart=None,
+                                 fiveprimeshift=None,
+                                 threeprimeshift=None):
         """
         A function which will return a sequence that has been truncated
         based on specificaitons provided.
 
         Need to have a call for the part sequence thta can be used too
         """
-
-        windowstart_0 = 0
-        windowstop_0 = len(self.sequence) + 1
-
-        if fiveprimeshift:
-            if fiveprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[fiveprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[0]]
-                # else:
-                start, stop = self.parttoposition[self.partnamelist[0]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
-            rel_shift_index = start + fiveprimeshift
-
-            windowstart_0 += rel_shift_index
-
-        if threeprimeshift:
-            if threeprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[threeprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[-1]]
-                # else:
-                start, stop = self.parttoposition[self.partnamelist[-1]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
-            rel_shift_index = stop + threeprimeshift
-
-            windowstop_0 = rel_shift_index
+        windowstart_0, windowstop_0 = self.return_start_stop_indicies_of_parts(
+                                                fiveprimerefpart,
+                                                threeprimerefpart,
+                                                fiveprimeshift,
+                                                threeprimeshift)
 
         return self.sequence[windowstart_0:windowstop_0]
 
     def create_kinefold_submission_object(self, device_name,
-                                          partcontexttofold='all',
                                           partstofold=None,
 
-                                          fiveprimeshift=False,
+                                          fiveprimeshift=None,
                                           fiveprimerefpart=None,
-                                          threeprimeshift=False,
+                                          threeprimeshift=None,
                                           threeprimerefpart=None,
 
                                           polrate=30, foldtimeafter=1,
@@ -262,9 +301,9 @@ class Device(object):
 
         :param device_name: A base name for the device that is being folded
         :type device_name: str
-        :param partcontexttofold: List of all parts housed within the object
-            that are to be folded.
-        :type partcontexttofold: list of str
+        # :param partcontexttofold: List of all parts housed within the object
+        #     that are to be folded.
+        # :type partcontexttofold: list of str
         :param partstofold: List of parts that you intend to calcuate folding
             data on.
         :type partstofold: list of str
@@ -317,8 +356,8 @@ class Device(object):
 
         out_name = 'dev' + bottom_character + device_name
 
-        if partcontexttofold == 'all':
-            partcontexttofold = self.partnamelist
+        # if partcontexttofold == 'all':
+        #     partcontexttofold = self.partnamelist
 
         if experimenttype == 2:
             out_name += additional_element_to_name('pol', polrate)
@@ -336,7 +375,7 @@ class Device(object):
                                                        fiveprimerefpart)
             else:
                 out_name += additional_element_to_name('rel_five_prime_part',
-                                                       partcontexttofold[0])
+                                                       self.partnamelist[0])
             # calculate five prime shift
 
         if threeprimeshift:
@@ -347,7 +386,7 @@ class Device(object):
                                                        threeprimerefpart)
             else:
                 out_name += additional_element_to_name('rel_three_prime_part',
-                                                       partcontexttofold[-1])
+                                                       self.partnamelist[-1])
             # calculate five prime shift
         if partstofold:
             for part in partstofold:
@@ -368,59 +407,18 @@ class Device(object):
         # Are given in 1 indexed
 
         # I might not actually need to have a relative window stop
-        sequence_to_fold = self.combined_part_sequences(partcontexttofold)
-        rel_windowstart_0 = self.parttoposition[partcontexttofold[0]][0]
-        rel_windowstop_0 = self.parttoposition[partcontexttofold[-1]][1]
-        windowstart_0 = 0
-        windowstop_0 = self.parttoposition[partcontexttofold[-1]][1] - \
-            rel_windowstart_0
-        max_window_size = windowstop_0
 
-        if fiveprimeshift:
-            if fiveprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[fiveprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[0]]
-                # else:
-                start, stop = self.parttoposition[partcontexttofold[0]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
-            rel_shift_index = start + fiveprimeshift
+        rel_windowstart_0, rel_windowstop_0 = \
+                                self.return_start_stop_indicies_of_parts(
+                                                         fiveprimerefpart,
+                                                         threeprimerefpart,
+                                                         fiveprimeshift,
+                                                         threeprimeshift)
 
-            windowstart_0 += rel_shift_index - rel_windowstart_0
-
-        if threeprimeshift:
-            if threeprimerefpart:
-                # need an index
-                start, stop = self.parttoposition[threeprimerefpart]
-            else:
-                # if partcontexttofold == 'all':
-                #     # Just grab the outside part
-                #     start, stop = self.parttoposition[self.partnamelist[-1]]
-                # else:
-                start, stop = self.parttoposition[partcontexttofold[-1]]
-            # We have the start stop of the device that we'll make the decision
-            # on so now we have to shift everything
-            # We are going to shift based on the fiveprime side of this
-            rel_shift_index = stop + threeprimeshift
-            windowstop_0 += rel_shift_index - rel_windowstop_0
-
-        if (windowstart_0 < 0) or (windowstart_0 > max_window_size):
-            raise IndexError
-            print "Shifting window outside of sequence"
-
-        if (windowstop_0 > max_window_size) or (windowstop_0 < 0):
-            raise IndexError
-            print "Shifting window outside of sequence"
-
-        if windowstart_0 >= windowstop_0:
-            raise IndexError
-            print "Requested windowstart is greater than or equal to" +\
-                " windowstop"
+        sequence_to_fold = self.return_windowed_sequence(fiveprimerefpart,
+                                                         threeprimerefpart,
+                                                         fiveprimeshift,
+                                                         threeprimeshift)
 
         # Populate the folding sub object
         # Creating the start_stop_list
@@ -436,8 +434,8 @@ class Device(object):
                 part_start_stop_list.append([rel_start+1, rel_stop])
 
         return FoldingSubData(name=out_name, sequence=sequence_to_fold,
-                              windowstart=windowstart_0+1,
-                              windowstop=windowstop_0,
+                              windowstart=1,
+                              windowstop=len(sequence_to_fold),
                               partstartstoplist=part_start_stop_list,
                               partnamelist=part_list,
                               referencepart=None,

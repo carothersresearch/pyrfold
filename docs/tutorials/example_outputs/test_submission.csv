@@ -1,0 +1,5 @@
+sequence,name,window start,window stop,numberofsimulations,Polymerization Rate (nt/s),Folding time after elongation (s),1 renaturation 2 contrans,psudoknots 0 no 1 yes,entanglements 0 no 1 yes,helix minimum free energy (Leave Blank IF Unsure),forced start,forced stop,forced size,forced start,forced stop,forced size,forced start,forced stop,forced size,posrefpart,part1,part start,part stop,part2,part start,part stop,part3,part start,part stop,part4,part start,part stop,part5,part start,part stop
+CUGACCAACCCAUAGGGACGGGCCAUCAUCUAUCCCUGAAGAGACGAAGGCUUCGGCCAAGUCGAAACGGAAACGUCGGAUAGUCGCCCGUCCCAAUAGUAACCAAAC,ASBV-1,1,108,30,20,1,2,0,0,6.3460741,,,,,,,,,,
+UGGGAGAAAUAGUACGGGACGGGCCAUCAUCUAUCCCUGAAGAGACGAAGGCUUCGGCCUCGUCGAAACGGAAACGUGGGAUAGUCGCCCGUCCCUGUGGAACAAACG,ASBV-3,1,108,30,20,1,2,0,0,6.3460741,,,,,,,,,,
+UGCUAGCGAUGCGCGGGCCUGUCACCGGAUGUGCUUUCCGGUCUGAUGAGUCCCUGAAAUGGGACGAAACAGGCCCCUGCGUAAACG,sTRSV-2,1,87,30,20,1,2,0,0,6.3460741,,,,,,,,,,
+CGAGAGAACACAUGAGGGCGAAAGCCGGCGCGUCCUGGAUUCCACUGCUUCGGCAGGUACAUCCAGCUGAUGAGUCCCAAAUAGGACGAAACGCGCUAAAAAAAACAA,Sman,1,108,30,20,1,2,0,0,6.3460741,,,,,,,,,,
